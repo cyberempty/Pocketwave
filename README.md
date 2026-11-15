@@ -124,9 +124,3 @@ Each edition has its own detailed README with features, project structure and bu
 ## Built with
 
 Electron, JavaScript / HTML / CSS and [`music-metadata`](https://github.com/Borewit/music-metadata) for tags. No front-end framework, no server.
-
-## License
-
-Released under the **MIT** license (see [`LICENSE`](LICENSE)). Third-party components (Electron, Chromium, music-metadata) keep their own licenses, listed in `licenses/THIRD-PARTY-NOTICES.txt` inside the built program.
-
-The icon in `assets` is part of the Pocketwave brand. The MIT license covers the code; if you fork the project and publish it under another name, please replace the icon.
