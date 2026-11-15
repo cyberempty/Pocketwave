@@ -1,0 +1,269 @@
+/* =====================================================================
+   Pocketwave · Liquid Glass
+   Layer loaded after app.css: translucent glass surfaces over a living,
+   accent-tinted background. Works with every theme / accent color because
+   it only uses the existing CSS variables (--panel, --g, --tx ...).
+   ===================================================================== */
+:root{
+  --tx2:#dcdcdc; --tx3:#b4b4b4;      /* lighter secondary texts: readable on glass */
+  --glass-blur:22px;
+  --glass-sat:190%;
+  --glass-a:.12;                          /* opacity of the glass tint */
+  --glass-hi:rgba(255,255,255,.30);       /* specular highlight (top edge) */
+  --glass-rim:rgba(255,255,255,.16);      /* thin bright rim */
+  --glass-low:rgba(255,255,255,.05);
+  --glass-shadow:0 14px 44px rgba(0,0,0,.38);
+  --glass-r:24px;
+  --glass-veil:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06));
+  --glass-sheen:linear-gradient(135deg,rgba(255,255,255,.17) 0%,rgba(255,255,255,.04) 32%,rgba(255,255,255,0) 55%,rgba(255,255,255,.05) 100%);
+  --r:var(--glass-r);
+}
+:root[data-theme="light"]{
+  --tx2:#3d3d3d; --tx3:#666;
+  --glass-a:.30;
+  --glass-hi:rgba(255,255,255,.95);
+  --glass-rim:rgba(255,255,255,.75);
+  --glass-low:rgba(255,255,255,.35);
+  --glass-shadow:0 12px 36px rgba(30,40,70,.18);
+  --glass-sheen:linear-gradient(135deg,rgba(255,255,255,.7) 0%,rgba(255,255,255,.18) 35%,rgba(255,255,255,0) 60%,rgba(255,255,255,.2) 100%);
+}
+
+@property --lg1{syntax:'<color>';inherits:true;initial-value:#1ed760}
+@property --lg2{syntax:'<color>';inherits:true;initial-value:#1ed760}
+@property --lg3{syntax:'<color>';inherits:true;initial-value:#1ed760}
+@property --lg4{syntax:'<color>';inherits:true;initial-value:#1ed760}
+@property --lg5{syntax:'<color>';inherits:true;initial-value:#1ed760}
+@property --lg6{syntax:'<color>';inherits:true;initial-value:#1ed760}
+:root{transition:--lg1 .9s,--lg2 .9s,--lg3 .9s,--lg4 .9s,--lg5 .9s,--lg6 .9s}
+/* ---------- Living background (what the glass refracts) ---------- */
+html,body{background:var(--bg)}
+body::before{
+  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(30% 36% at 16% 18%,color-mix(in srgb,var(--lg1) 85%,transparent),transparent 72%),
+    radial-gradient(28% 34% at 86% 14%,color-mix(in srgb,var(--lg2) 75%,transparent),transparent 72%),
+    radial-gradient(32% 38% at 52% 50%,color-mix(in srgb,var(--lg1) 45%,transparent),transparent 74%),
+    radial-gradient(30% 36% at 84% 86%,color-mix(in srgb,var(--lg3) 70%,transparent),transparent 72%),
+    radial-gradient(28% 34% at 14% 84%,color-mix(in srgb,var(--lg5) 65%,transparent),transparent 72%),
+    radial-gradient(22% 28% at 40% 14%,color-mix(in srgb,var(--lg4) 45%,transparent),transparent 72%),
+    radial-gradient(22% 30% at 12% 52%,color-mix(in srgb,var(--lg3) 55%,transparent),transparent 72%),
+    radial-gradient(22% 30% at 90% 52%,color-mix(in srgb,var(--lg2) 55%,transparent),transparent 72%),
+    radial-gradient(24% 30% at 66% 70%,color-mix(in srgb,var(--lg6) 35%,transparent),transparent 72%);
+  filter:blur(26px) saturate(1.3);
+  animation:lg-drift 38s ease-in-out infinite alternate;
+}
+:root[data-theme="light"] body::before{opacity:.8}
+@keyframes lg-drift{
+  0%{transform:translate3d(-2%,-1%,0) rotate(0deg) scale(1)}
+  50%{transform:translate3d(3%,2%,0) rotate(8deg) scale(1.08)}
+  100%{transform:translate3d(-1%,3%,0) rotate(-6deg) scale(1.03)}
+}
+/* Custom title bar zone: the glass background continues behind the window buttons */
+#app{position:relative;z-index:1;padding:0 8px 8px;gap:8px}
+#titlebar{
+  position:fixed;top:0;left:0;right:0;height:40px;z-index:2;
+  display:flex;align-items:center;padding:0 150px 0 18px;
+  font-size:12.5px;font-weight:600;color:var(--tx);
+  background:none;border:0;     /* no band: the glass background continues seamlessly */
+  -webkit-app-region:drag;
+}
+:root[data-os="mac"] #titlebar{padding-left:84px}
+#app{margin-top:40px;height:calc(100% - 40px)}
+#side{gap:8px}
+
+/* ---------- Glass surfaces ---------- */
+#main,.panel,#rpanel,#player{
+  background:var(--glass-sheen),var(--glass-veil),color-mix(in srgb,var(--panel) calc(var(--glass-a) * 100%),transparent);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.12);
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.12);
+  border:1px solid var(--glass-rim);
+  border-radius:var(--glass-r);
+  box-shadow:
+    inset 0 1.5px 0 var(--glass-hi),
+    inset 0 -1px 0 var(--glass-low),
+    inset 1px 0 0 var(--glass-low),
+    var(--glass-shadow);
+}
+#main{overflow:hidden}
+#player{padding:10px 18px;min-height:88px;border-radius:30px}
+.panel.top{padding:10px}
+.panel.libpanel{padding:6px 10px 10px}
+
+/* Sticky column header: glass too, so rows blur under it */
+.colhead{
+  background:color-mix(in srgb,var(--panel) 55%,transparent);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+  border-bottom:1px solid var(--glass-rim);border-radius:14px;margin-top:4px;
+}
+
+/* ---------- Navigation, rows, hover states ---------- */
+.nav-i,.lib-i{border-radius:18px;border:1px solid transparent}
+.nav-i:hover,.lib-i:hover{background:var(--rowhov);border-color:var(--glass-low)}
+.nav-i.on{
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
+  border-color:var(--glass-rim);
+  box-shadow:inset 0 1px 0 var(--glass-hi),0 6px 18px rgba(0,0,0,.22);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+:root[data-theme="light"] .nav-i.on{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.6))}
+.tile,.qimg,.himg,.card-img,.q-tile,.cover,.pv-cover{border-radius:14px;box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 14px rgba(0,0,0,.25)}
+
+.np-big{border-radius:22px;box-shadow:inset 0 1.5px 0 var(--glass-hi),0 18px 44px rgba(0,0,0,.4)}
+.cover{border-radius:16px}
+
+/* ---------- Cards ---------- */
+.card,.hcard,.qtile{border-radius:20px;border:1px solid transparent;transition:background .2s,transform .2s,box-shadow .2s,border-color .2s}
+.card:hover,.hcard:hover{
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05));
+  border-color:var(--glass-rim);
+  box-shadow:inset 0 1px 0 var(--glass-hi),0 6px 16px rgba(0,0,0,.22);
+}
+.qtile{background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border-color:var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi)}
+.qtile:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08))}
+
+/* ---------- Buttons, search, chips ---------- */
+.top-btn,.ibtn:not(.dots){-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.top-btn{
+  background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
+  border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 12px rgba(0,0,0,.2);
+}
+.top-btn:hover:not(:disabled){background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.12))}
+.ibtn:hover:not(:disabled){background:rgba(255,255,255,.12)}
+.search{
+  height:46px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+  border:1px solid var(--glass-rim);box-shadow:inset 0 1.5px 2px rgba(0,0,0,.18),inset 0 -1px 0 var(--glass-low);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.search:hover{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.08))}
+.search:focus-within{border-color:var(--g);box-shadow:inset 0 1.5px 2px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--g) 32%,transparent)}
+.sr-chip,.chip,.kbd,#banner,.acc-preview{
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+  border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi);
+}
+.sr-chip:hover,.chip:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08))}
+.chip.on{background:linear-gradient(180deg,color-mix(in srgb,var(--g) 100%,#fff 25%),var(--g));border-color:color-mix(in srgb,var(--g) 70%,#fff)}
+.rtab.on,.set-tab.on{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.08));box-shadow:inset 0 1px 0 var(--glass-hi);border-radius:999px}
+.set-tab:hover{background:var(--rowhov)}
+
+.btn{
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06));
+  border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 14px rgba(0,0,0,.2);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+}
+.btn:hover:not(:disabled){border-color:var(--glass-hi);background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
+.btn.pri{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--g) 100%,#fff 30%) 0%,var(--g) 55%,color-mix(in srgb,var(--g) 100%,#000 12%) 100%);
+  border-color:color-mix(in srgb,var(--g) 60%,#fff);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),0 8px 22px color-mix(in srgb,var(--g) 45%,transparent);
+}
+.btn.pri:hover:not(:disabled){background:linear-gradient(180deg,color-mix(in srgb,var(--gh) 100%,#fff 30%),var(--gh))}
+.btn.pri.danger{background:linear-gradient(180deg,color-mix(in srgb,var(--danger) 100%,#fff 25%),var(--danger))}
+
+/* Main play / pause: glossy glass orb */
+.playbtn{
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 -3px 6px rgba(0,0,0,.12),0 6px 20px rgba(0,0,0,.35);
+}
+:root[data-accent="custom"] .playbtn{box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 6px 22px color-mix(in srgb,var(--g) 50%,transparent)}
+
+/* Sliders: slim glass track with a soft glowing thumb */
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;box-shadow:inset 0 1px 0 #fff,0 2px 8px rgba(0,0,0,.45)}
+
+/* ---------- Floating layers: menus, dialogs, toasts ---------- */
+#menu,.modal,.toast{
+  -webkit-backdrop-filter:blur(28px) saturate(190%);backdrop-filter:blur(28px) saturate(190%);
+  border:1px solid var(--glass-rim);
+  box-shadow:inset 0 1.5px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-low),0 24px 60px rgba(0,0,0,.5);
+}
+#menu{background:var(--glass-sheen),color-mix(in srgb,var(--menu) 62%,transparent);border-radius:20px;padding:6px}
+#menu button{border-radius:12px}
+.modal{background:var(--glass-sheen),color-mix(in srgb,var(--modal) 62%,transparent);border-radius:30px;padding:28px}
+.toast{background:var(--glass-sheen),color-mix(in srgb,var(--toast) 66%,transparent);border-radius:999px;padding:12px 22px}
+.overlay{background:color-mix(in srgb,var(--scrim) 55%,transparent);-webkit-backdrop-filter:blur(10px) saturate(130%);backdrop-filter:blur(10px) saturate(130%)}
+.modal input[type=text],.hex input,.val{
+  border-radius:14px;background:color-mix(in srgb,var(--input) 55%,transparent);
+  border:1px solid var(--glass-rim);box-shadow:inset 0 1.5px 3px rgba(0,0,0,.25)
+}
+
+/* ---------- Now playing full screen ---------- */
+.npf-btn,.npf-close,.npf-full{
+  background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);
+  -webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);
+}
+.npf-btn:hover{background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.12))}
+.npf-cover{border-radius:30px;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),0 30px 80px rgba(0,0,0,.55)}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar{width:14px;height:14px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+/* slim (3px) when not in use, a bit fatter (7px) while the pointer is on it */
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.26);background-clip:content-box;border:5.5px solid transparent;border-radius:10px;min-height:48px}
+::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:rgba(255,255,255,.5);background-clip:content-box;border:3.5px solid transparent}
+:root[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.26);background-clip:content-box}
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.45);background-clip:content-box}
+
+/* ---------- Small screens / accessibility ---------- */
+@media (max-width:900px){#rpanel{background:var(--glass-sheen),color-mix(in srgb,var(--panel) 75%,transparent)}}
+@media (prefers-reduced-motion:reduce){body::before{animation:none}}
+
+
+/* Full-screen "Now playing": keep its buttons clear of the window buttons */
+.npf-close{top:52px}
+
+/* ---------- Playlist / folder rows: tidy cover + name ---------- */
+.lib-i{align-items:center;gap:14px;padding:7px 12px 7px 7px;min-height:58px}
+.lib-i .tile{width:44px;height:44px;border-radius:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 3px 10px rgba(0,0,0,.25)}
+.lib-i .tile svg{width:22px;height:22px}
+.lib-i .txt{gap:2px;justify-content:center}
+.lib-i .l{font-size:14.5px;line-height:1.25}
+.lib-i .sub{font-size:12.5px;line-height:1.2}
+.lib-i .dots{margin-left:2px}
+.compact .lib-i{padding:7px;justify-content:center;gap:0}
+
+/* ---------- Everything is glass: no solid dark blocks ---------- */
+.tile,.qimg,.himg,.card-img,.q-tile,.cover,.np-big,.pv-cover{background-color:color-mix(in srgb,var(--g) 20%,rgba(255,255,255,.10))}
+.sec-h{padding-top:10px;padding-bottom:4px}
+.panel.top{padding:8px}
+.panel.libpanel{padding:4px 8px 8px}
+#player{min-height:84px}
+.rhead{gap:8px}
+
+/* Soft shadow keeps the texts crisp over bright glass (dark themes) */
+:root:not([data-theme="light"]) :is(#side,#main,#rpanel,#player){text-shadow:0 1px 3px rgba(0,0,0,.32)}
+
+/* ---------- Settings: own background colors ---------- */
+.bg-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bg-pick{flex:none;width:40px;height:40px;padding:0;border:1px solid var(--glass-rim);border-radius:12px;background:none;cursor:pointer;overflow:hidden}
+.bg-pick::-webkit-color-swatch-wrapper{padding:0}
+.bg-pick::-webkit-color-swatch{border:0;border-radius:11px}
+
+/* ---------- Now playing full screen open: nothing underneath is drawn, so it costs no CPU / GPU / memory ---------- */
+.np-open #app,.np-open #titlebar{visibility:hidden}
+.np-open body::before{display:none;animation:none}
+
+/* ---------- Nothing gets cut on hover ---------- */
+.card,.hcard,.qtile{transform:none !important}
+.hrow{padding:6px 0 10px;margin:-6px -12px -10px}           /* room for the hover border / shadow inside the clipped row */
+.palette{padding:8px;margin:4px -8px}                          /* room for the selected ring and the hover zoom */
+.dot:hover{transform:scale(1.08)}
+
+/* ---------- Accent palette: selected color = just a ring (drawn inside the dot, so it can never be cut) ---------- */
+.dot{transition:none}
+.dot:hover{transform:none;filter:brightness(1.15)}
+.dot.on{border:3px solid var(--tx);box-shadow:inset 0 0 0 3px var(--modal)}
+.dot.on::after{content:none}
+.palette{padding:4px;margin:8px -4px}
+
+/* ---------- Now playing full screen: close button on the top edge, mirroring the full-screen button below ---------- */
+:root:fullscreen .npf-close{top:14px}
+
+/* ---------- Settings: folder rows, buttons level with their path box and all the same width ---------- */
+.set-row:has(.lbl .val){align-items:flex-end}
+.set-row .lbl .val{display:flex !important;align-items:center;min-height:40px;box-sizing:border-box;margin-top:8px !important}
+.set-row .ctl2 .btn{min-width:128px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px}
+
+/* Idle (no mouse movement for 3 s) in the Now playing screen: cursor and the two corner buttons disappear */
+.npf-close,.npf-full{transition:opacity .35s ease,background .15s}
+.np-full.idle,.np-full.idle *{cursor:none !important}
+.np-full.idle .npf-close,.np-full.idle .npf-full{opacity:0;pointer-events:none}

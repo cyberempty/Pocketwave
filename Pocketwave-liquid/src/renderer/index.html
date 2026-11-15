@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file:; media-src file: gwmedia: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocketwave</title>
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/liquidglass.css">
+</head>
+<body>
+<div id="titlebar"><span>Pocketwave</span></div>
+<div id="app">
+  <aside id="side">
+    <div class="panel top">
+      <nav id="nav"></nav>
+    </div>
+    <div class="panel libpanel">
+      <div id="lib" class="lib"></div>
+    </div>
+    <div id="resizer" title="Drag to resize"></div>
+  </aside>
+
+  <main id="main">
+    <header id="top">
+      <div class="top-left"></div>
+      <div class="search">
+        <span id="ico-search"></span>
+        <input id="q" type="search" placeholder="Search by title, artist, album or folder" autocomplete="off" spellcheck="false">
+        <button id="q-clear" class="ibtn" hidden title="Clear search"></button>
+      </div>
+      <div class="top-actions">
+        <button id="btn-rescan" class="ibtn top-btn" title="Refresh library"></button>
+        <button id="btn-settings" class="ibtn top-btn" title="Settings"></button>
+      </div>
+    </header>
+    <div id="banner" hidden></div>
+    <div id="scroller">
+      <div id="home" hidden></div>
+      <div id="hero"></div>
+      <div id="colhead" class="grid colhead"></div>
+      <div id="rows"></div>
+      <div id="empty" hidden></div>
+    </div>
+  </main>
+
+  <aside id="rpanel" hidden>
+    <div id="rresizer" title="Drag to resize"></div>
+    <div class="rhead" id="rhead" title="Drag to move the panel to the other side">
+      <div class="rtabs">
+        <button class="rtab" data-mode="now">Now playing</button>
+        <button class="rtab" data-mode="queue">Queue</button>
+      </div>
+      <button id="r-close" class="ibtn" title="Close panel"></button>
+    </div>
+    <div id="rbody" class="rbody"></div>
+  </aside>
+
+  <footer id="player">
+    <div class="np">
+      <div id="cover" class="cover"></div>
+      <div class="np-txt">
+        <div id="np-title" class="np-title">Nothing playing</div>
+        <div id="np-artist" class="np-artist"></div>
+      </div>
+    </div>
+    <div class="ctr">
+      <div class="btns">
+        <button id="b-shuffle" class="ibtn ctl" title="Shuffle"></button>
+        <button id="b-prev" class="ibtn" title="Previous"></button>
+        <button id="b-play" class="playbtn" title="Play"></button>
+        <button id="b-next" class="ibtn" title="Next"></button>
+        <button id="b-repeat" class="ibtn ctl" title="Repeat"></button>
+      </div>
+      <div class="seek">
+        <span id="t-cur">0:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Playback position">
+        <span id="t-dur" role="button" tabindex="0" title="Click to show the remaining time">0:00</span>
+      </div>
+    </div>
+    <div class="rt">
+      <button id="b-panel" class="ibtn ctl" title="Show / hide the side panel"></button>
+      <button id="b-queue" class="ibtn ctl" title="Queue"></button>
+      <button id="b-mute" class="ibtn" title="Mute"></button>
+      <input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume">
+    </div>
+  </footer>
+</div>
+<div id="nowplaying" class="np-full" hidden role="dialog" aria-label="Now playing">
+  <div class="npf-bg" id="npf-bg-a"></div><div class="npf-bg" id="npf-bg-b"></div><div class="npf-shade"></div>
+  <button id="npf-close" class="npf-btn npf-close" title="Close (Esc)"></button>
+  <div class="npf-main">
+    <div id="npf-cover" class="npf-cover"></div>
+    <div class="npf-col">
+      <div class="npf-info">
+        <div id="npf-title" class="npf-title"></div>
+        <div id="npf-artist" class="npf-artist"></div>
+      </div>
+      <div class="npf-seek">
+        <input id="npf-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Playback position">
+        <div class="npf-times"><span id="npf-cur">0:00</span><span id="npf-rem">-0:00</span></div>
+      </div>
+      <div class="npf-ctrl">
+        <button id="npf-prev" class="npf-btn" title="Previous"></button>
+        <button id="npf-play" class="npf-btn npf-play" title="Play"></button>
+        <button id="npf-next" class="npf-btn" title="Next"></button>
+      </div>
+      <div class="npf-vol">
+        <button id="npf-mute" class="npf-btn npf-small" title="Mute"></button>
+        <input id="npf-volume" type="range" min="0" max="100" value="100" aria-label="Volume">
+        <span id="npf-vol-max" class="npf-vmax"></span>
+      </div>
+    </div>
+  </div>
+  <button id="npf-full" class="npf-btn npf-full" title="Full screen"></button>
+</div>
+<div id="dropzones" hidden><div class="dz" data-side="left">Dock on the left</div><div class="dz" data-side="right">Dock on the right</div></div>
+<div id="modal-root"></div>
+<div id="menu" hidden></div>
+<div id="toast" aria-live="polite"></div>
+<script src="scripts/core.js"></script>
+<script src="scripts/library.js"></script>
+<script src="scripts/player.js"></script>
+<script src="scripts/app.js"></script>
+</body>
+</html>
