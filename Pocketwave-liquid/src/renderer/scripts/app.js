@@ -711,3 +711,33 @@ async function init() {
   else applyWatch();
 }
 init();
+
+/* ----- Liquid glass: slow drift of the colored background -----
+   Same movement as before (38 s, back and forth, same positions, rotation and zoom), but the position is updated
+   8 times per second instead of 60. The picture is blurred and moves a fraction of a pixel per update, so it looks
+   identical, while the glass panels above it are re-drawn far less often. It pauses while the Now playing screen
+   covers the window or the window is hidden. */
+(function lgDrift() {
+  const el = document.getElementById('lgbg');
+  if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const K = [[-4, -2, 0, 2], [6, 4, 8, 2.16], [-2, 6, -6, 2.06]];          // x %, y %, rotation deg, scale
+  const ease = u => {                                                        // CSS ease-in-out: cubic-bezier(.42, 0, .58, 1)
+    let lo = 0, hi = 1, s = u;
+    for (let i = 0; i < 24; i++) {
+      s = (lo + hi) / 2;
+      const x = 3 * (1 - s) * (1 - s) * s * .42 + 3 * (1 - s) * s * s * .58 + s * s * s;
+      if (x < u) lo = s; else hi = s;
+    }
+    return 3 * (1 - s) * s * s + s * s * s;                                  // y of the curve: control points y1 = 0, y2 = 1
+  };
+  const t0 = performance.now();
+  const draw = () => {
+    if (document.hidden || document.documentElement.classList.contains('np-open')) return;
+    const t = ((performance.now() - t0) / 1000) % 76;
+    const x = t < 38 ? t / 38 : 2 - t / 38;                                  // forward, then backward
+    const k = Math.min(1, Math.floor(x * 2)), f = ease(x * 2 - k);
+    const a = K[k], b = K[k + 1], m = i => a[i] + (b[i] - a[i]) * f;
+    el.style.transform = `translate3d(${m(0).toFixed(3)}%,${m(1).toFixed(3)}%,0) rotate(${m(2).toFixed(3)}deg) scale(${m(3).toFixed(4)})`;
+  };
+  draw(); setInterval(draw, 125);
+})();

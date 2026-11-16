@@ -117,7 +117,7 @@ Everything uses the existing player, so the player bar, the side panel and this 
 - **Appearance:**
   - **Theme:** dark (default), light, or any **theme color** from a ready-made palette or your own hexadecimal color (for example `#16213A`); backgrounds and panels follow it.
   - **Accent color:** palette or hexadecimal field (for example `#00FF00`) with live preview and a reset to green.
-  - **Dynamic color:** optionally use the dominant color of the album cover as the accent.
+  - **Dynamic color:** optionally use the dominant color of the album cover as the accent. White, black or grey covers give a matching neutral (near white or soft grey) instead of a color.
   - **Playlist page color from its photo:** the page header takes the dominant color of the playlist photo (on by default).
 - **Shortcuts:** editable table with a reset to defaults.
 

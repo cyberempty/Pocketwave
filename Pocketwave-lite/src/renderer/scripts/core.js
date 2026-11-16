@@ -145,7 +145,8 @@ function applyTheme() {
 }
 
 // Dominant (most saturated) color of a cover image
-function dominantColor(src) {
+// With neutral = true (dynamic accent), a black / white / grey cover gives a matching neutral instead of null
+function dominantColor(src, neutral) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
@@ -155,8 +156,10 @@ function dominantColor(src) {
         x.drawImage(img, 0, 0, 32, 32);
         const d = x.getImageData(0, 0, 32, 32).data;
         const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+        let sumL = 0, nL = 0;
         for (let i = 0; i < d.length; i += 4) {
           if (d[i + 3] < 128) continue;
+          sumL += (d[i] + d[i + 1] + d[i + 2]) / 765; nL++;
           const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
           const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn;
           if (dl < 0.08) continue;
@@ -167,7 +170,12 @@ function dominantColor(src) {
           bin.w += w; bin.r += d[i] * w; bin.g += d[i + 1] * w; bin.b += d[i + 2] * w;
         }
         const best = bins.reduce((a, b) => b.w > a.w ? b : a);
-        if (best.w < 0.5) return resolve(null);
+        if (best.w < 0.5) {
+          // Black / white / grey cover: no real color in it, so the accent becomes a matching neutral (never the default green)
+          if (!neutral || !nL) return resolve(null);
+          const g = Math.round(150 + (sumL / nL) * 100);   // dark cover -> soft grey, white cover -> near white
+          return resolve(rgbToHex(g, g, g));
+        }
         let rgb = [best.r / best.w, best.g / best.w, best.b / best.w];
         const L = lum(rgb);
         if (L < 0.08) rgb = mixRgb(rgb, [255, 255, 255], 0.35);
@@ -181,7 +189,7 @@ function dominantColor(src) {
 }
 async function updateDynamicAccent(src) {
   if (!S.user.settings.dynamicColor || !src) S.dynamicAccent = null;
-  else S.dynamicAccent = await dominantColor(src);
+  else S.dynamicAccent = await dominantColor(src, true);
   applyAccent(S.dynamicAccent || baseAccent());
 }
 

@@ -37,8 +37,9 @@
 :root{transition:--lg1 .9s,--lg2 .9s,--lg3 .9s,--lg4 .9s,--lg5 .9s,--lg6 .9s}
 /* ---------- Living background (what the glass refracts) ---------- */
 html,body{background:var(--bg)}
-body::before{
-  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;
+#lgbg{
+  /* Drawn at half size and scaled x2 (see the drift in app.js): the picture is blurred anyway, so it looks the same but costs a quarter of the work */
+  position:fixed;left:15%;top:15%;width:70%;height:70%;z-index:0;pointer-events:none;will-change:transform;
   background:
     radial-gradient(30% 36% at 16% 18%,color-mix(in srgb,var(--lg1) 85%,transparent),transparent 72%),
     radial-gradient(28% 34% at 86% 14%,color-mix(in srgb,var(--lg2) 75%,transparent),transparent 72%),
@@ -49,15 +50,9 @@ body::before{
     radial-gradient(22% 30% at 12% 52%,color-mix(in srgb,var(--lg3) 55%,transparent),transparent 72%),
     radial-gradient(22% 30% at 90% 52%,color-mix(in srgb,var(--lg2) 55%,transparent),transparent 72%),
     radial-gradient(24% 30% at 66% 70%,color-mix(in srgb,var(--lg6) 35%,transparent),transparent 72%);
-  filter:blur(26px) saturate(1.3);
-  animation:lg-drift 38s ease-in-out infinite alternate;
+  filter:blur(13px) saturate(1.3);
 }
-:root[data-theme="light"] body::before{opacity:.8}
-@keyframes lg-drift{
-  0%{transform:translate3d(-2%,-1%,0) rotate(0deg) scale(1)}
-  50%{transform:translate3d(3%,2%,0) rotate(8deg) scale(1.08)}
-  100%{transform:translate3d(-1%,3%,0) rotate(-6deg) scale(1.03)}
-}
+:root[data-theme="light"] #lgbg{opacity:.8}
 /* Custom title bar zone: the glass background continues behind the window buttons */
 #app{position:relative;z-index:1;padding:0 8px 8px;gap:8px}
 #titlebar{
@@ -205,7 +200,6 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 
 /* ---------- Small screens / accessibility ---------- */
 @media (max-width:900px){#rpanel{background:var(--glass-sheen),color-mix(in srgb,var(--panel) 75%,transparent)}}
-@media (prefers-reduced-motion:reduce){body::before{animation:none}}
 
 
 /* Full-screen "Now playing": keep its buttons clear of the window buttons */
@@ -240,7 +234,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 
 /* ---------- Now playing full screen open: nothing underneath is drawn, so it costs no CPU / GPU / memory ---------- */
 .np-open #app,.np-open #titlebar{visibility:hidden}
-.np-open body::before{display:none;animation:none}
+.np-open #lgbg{display:none}
 
 /* ---------- Nothing gets cut on hover ---------- */
 .card,.hcard,.qtile{transform:none !important}
@@ -267,3 +261,8 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 .npf-close,.npf-full{transition:opacity .35s ease,background .15s}
 .np-full.idle,.np-full.idle *{cursor:none !important}
 .np-full.idle .npf-close,.np-full.idle .npf-full{opacity:0;pointer-events:none}
+
+/* Now playing volume and seek bars: center the 16 px glass thumb on the 5 px rail, and keep the small mute button flat like the speaker on the other side */
+.npf-seek input[type=range]::-webkit-slider-thumb,.npf-vol input[type=range]::-webkit-slider-thumb{margin-top:-5.5px}
+.npf-vol .npf-btn.npf-small{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.npf-vol .npf-btn.npf-small:hover{background:rgba(255,255,255,.12)}
