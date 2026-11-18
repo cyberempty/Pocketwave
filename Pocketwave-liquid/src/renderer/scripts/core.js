@@ -146,28 +146,94 @@ function rgbToHsl([r, g, b]) {
   }
   return [h, s, l];
 }
+// The six background colors live on the background layer only (not inherited): changing them does not restyle the whole page
+/* The living background is a small canvas (see #lgbg in liquidglass.css): nine soft colored lights, the same ones the old CSS gradients drew,
+   but painted at 320x180 and stretched by the GPU. Color changes fade over 0.9 s. */
+const LG_LIGHTS = [   // [color index, alpha, radius x %, radius y %, center x %, center y %]  (same values as the former gradients)
+  [0, .85, 30, 36, 16, 18], [1, .75, 28, 34, 86, 14], [0, .45, 32, 38, 52, 50], [2, .70, 30, 36, 84, 86], [4, .65, 28, 34, 14, 84],
+  [3, .45, 22, 28, 40, 14], [2, .55, 22, 30, 12, 52], [1, .55, 22, 30, 90, 52], [5, .35, 24, 30, 66, 70]
+];
+const lgState = { cur: Array.from({ length: 6 }, () => [30, 215, 96]), from: null, to: null, t0: 0, raf: 0, pending: null };
+function lgParse(css) {
+  const cv = lgParse.cv || (lgParse.cv = document.createElement('canvas')), x = cv.getContext('2d', { willReadFrequently: true });
+  cv.width = cv.height = 1; x.clearRect(0, 0, 1, 1); x.fillStyle = '#000'; x.fillStyle = css; x.fillRect(0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]];
+}
+function lgPaint(cols) {
+  const cv = document.getElementById('lgbg'); if (!cv || !cv.getContext) return;
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.clearRect(0, 0, W, H);
+  for (const [ci, al, rx, ry, cx, cy] of LG_LIGHTS) {
+    const [r, g, b] = cols[ci].map(Math.round);
+    x.save(); x.translate(W * cx / 100, H * cy / 100); x.scale(W * rx / 100, H * ry / 100);
+    const gr = x.createRadialGradient(0, 0, 0, 0, 0, 1);
+    gr.addColorStop(0, `rgba(${r},${g},${b},${al})`); gr.addColorStop(.72, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(-1.5, -1.5, 3, 3); x.restore();
+  }
+}
+function lgTick(now) {
+  const st = lgState, k = Math.min(1, (now - st.t0) / 900), e = k * k * (3 - 2 * k);
+  st.cur = st.to.map((t, i) => t.map((v, j) => st.from[i][j] + (v - st.from[i][j]) * e));
+  lgPaint(st.cur);
+  st.raf = k < 1 ? requestAnimationFrame(lgTick) : 0;
+}
+function lgApply() {
+  const st = lgState, p = st.pending; st.pending = null; if (!p) return;
+  const to = st.cur.map((c, i) => p[i] ? lgParse(p[i]) : st.to ? st.to[i] : c);
+  st.from = st.cur.map(c => c.slice()); st.to = to; st.t0 = st.started ? performance.now() : -1e9; st.started = true;   // the very first palette appears at once
+  if (!st.raf) st.raf = requestAnimationFrame(lgTick);
+}
+// applyGlassPalette writes --lg1..--lg6 through this shim, exactly as it did with the old CSS variables
+function lgTarget() {
+  return { setProperty(name, val) {
+    const st = lgState; (st.pending || (st.pending = [])); st.pending[+name.slice(4) - 1] = val;
+    clearTimeout(lgTarget.t); lgTarget.t = setTimeout(lgApply, 0);
+  } };
+}
+document.addEventListener('DOMContentLoaded', () => lgPaint(lgState.cur));
+// Same vividness the old saturate() filter gave, but computed once here instead of by the GPU on every frame
+function vivid(hex, k = 1.8) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex;
+  const n = parseInt(m[1], 16), [h, s, l] = rgbToHsl([n >> 16 & 255, n >> 8 & 255, n & 255]);
+  return `hsl(${Math.round(h)} ${Math.round(Math.min(1, s * k) * 100)}% ${Math.round(l * 100)}%)`;
+}
 function applyGlassPalette(rgb) {
   // The person chose their own background colors (1 to 5): they are spread over the six lights behind the glass
   const us = (typeof S !== 'undefined' && S.user && S.user.settings) || null;
   if (us && us.bgMode === 'custom') {
-    const n = Math.max(1, Math.min(5, us.bgCount | 0)), cols = us.bgColors.slice(0, n), r = document.documentElement.style;
-    [0, 1, 2, 3, 4, 5].forEach(i => r.setProperty('--lg' + (i + 1), cols[i % n]));
+    const n = Math.max(1, Math.min(5, us.bgCount | 0)), cols = us.bgColors.slice(0, n), r = lgTarget();
+    [0, 1, 2, 3, 4, 5].forEach(i => r.setProperty('--lg' + (i + 1), vivid(cols[i % n])));
     return;
   }
-  const [h, s0, l0] = rgbToHsl(rgb), root = document.documentElement.style;
+  // Nothing playing and the default green accent: the 3 start colors (green, teal, sky blue) instead of the generic green harmony.
+  // As soon as a song with a cover plays (dynamic colors) or a custom accent is chosen, the background follows it as before.
+  if (!(typeof S !== 'undefined' && S.dynamicAccent) && document.documentElement.dataset.accent === 'default') {
+    const r0 = lgTarget(); ['#1ed760', '#14c4a0', '#22a6e0', '#1ed760', '#14c4a0', '#22a6e0'].forEach((col, i) => r0.setProperty('--lg' + (i + 1), vivid(col)));
+    return;
+  }
+  const [h, s0, l0] = rgbToHsl(rgb), root = lgTarget();
   if (s0 < 0.1) {   // neutral accent (white, grey, black-and-white covers): a calm background in matching shades of grey
     const L = Math.max(30, Math.min(88, Math.round(l0 * 100)));
     [0, 8, 14, 20, 26, 6].forEach((d, i) => root.setProperty('--lg' + (i + 1), `hsl(${Math.round(h)} 0% ${Math.max(22, L - d)}%)`));
     return;
   }
-  const sat = Math.min(0.9, s0 * 0.95);                       // grey accents stay neutral
+  // A cover with real colors: the lights are those colors (1 to 3 of them), nothing else. With a single color: close shades of it.
+  if (typeof S !== 'undefined' && S.dynamicAccent && S.dynamicPalette && S.dynamicPalette.length) {
+    const pal = S.dynamicPalette.map(hex => rgbToHsl(hexToRgb(hex)));
+    const shade = (dh, dl) => { const [hh, ss, ll] = pal[0]; return `hsl(${Math.round((hh + dh + 360) % 360)} ${Math.round(Math.min(1, ss * 1.5) * 100)}% ${Math.round(Math.max(.3, Math.min(.62, ll + dl)) * 100)}%)`; };
+    const own = i => { const [hh, ss, ll] = pal[i]; return `hsl(${Math.round(hh)} ${Math.round(Math.min(1, ss * 1.5) * 100)}% ${Math.round(Math.max(.3, Math.min(.62, ll)) * 100)}%)`; };
+    const A = own(0), B = pal[1] ? own(1) : shade(16, 0), C = pal[2] ? own(2) : shade(-16, 0);
+    [A, B, C, pal[1] ? A : shade(8, .06), pal[2] ? B : shade(-8, .06), pal[1] ? C : shade(0, -.06)].forEach((col, i) => root.setProperty('--lg' + (i + 1), col));
+    return;
+  }
+  const sat = Math.min(1, s0 * 1.9);                       // grey accents stay neutral
   const col = (dh, sMul, l) => `hsl(${Math.round((h + dh + 360) % 360)} ${Math.round(sat * sMul * 100)}% ${l}%)`;
   root.setProperty('--lg1', col(0, 1, 52));       // the accent itself
-  root.setProperty('--lg2', col(28, 0.95, 50));   // analogous +
-  root.setProperty('--lg3', col(-28, 0.95, 48));  // analogous -
-  root.setProperty('--lg4', col(52, 0.85, 46));   // wider neighbour
-  root.setProperty('--lg5', col(-52, 0.85, 44));
-  root.setProperty('--lg6', col(180, 0.5, 52));   // soft contrast, desaturated so it blends in
+  root.setProperty('--lg2', col(20, 0.95, 50));   // close neighbours only: every light stays in the family of the accent
+  root.setProperty('--lg3', col(-20, 0.95, 48));
+  root.setProperty('--lg4', col(38, 0.85, 46));
+  root.setProperty('--lg5', col(-38, 0.85, 44));
+  root.setProperty('--lg6', col(0, 0.8, 58));     // the accent again, lighter
 }
 // Two customizations: the THEME (dark, light, or any theme color) and the ACCENT color
 function applyTheme() {
@@ -181,6 +247,7 @@ function applyTheme() {
   } else {
     root.dataset.theme = st.theme === 'light' ? 'light' : 'dark';
   }
+  applyGfx();
   applyAccent(S.dynamicAccent || baseAccent());
   try { pocketwave.setTitleBarDark(root.dataset.theme !== 'light'); } catch (e) { /* older shell */ }
 }
@@ -212,15 +279,26 @@ function dominantColor(src) {
         const best = bins.reduce((a, b) => b.w > a.w ? b : a);
         if (best.w < 0.5) {
           // Black / white / grey cover: no real color in it, so the accent becomes a matching neutral (never the default green)
+          dominantColor.palette = null;
           if (!nL) return resolve(null);
           const g = Math.round(150 + (sumL / nL) * 100);   // dark cover -> soft grey, white cover -> near white
           return resolve(rgbToHex(g, g, g));
         }
-        let rgb = [best.r / best.w, best.g / best.w, best.b / best.w];
-        const L = lum(rgb);
-        if (L < 0.08) rgb = mixRgb(rgb, [255, 255, 255], 0.35);
-        if (L > 0.6) rgb = mixRgb(rgb, [0, 0, 0], 0.25);
-        resolve(rgbToHex(...rgb));
+        const fix = b => {
+          let rgb = [b.r / b.w, b.g / b.w, b.b / b.w];
+          const L = lum(rgb);
+          if (L < 0.08) rgb = mixRgb(rgb, [255, 255, 255], 0.35);
+          if (L > 0.6) rgb = mixRgb(rgb, [0, 0, 0], 0.25);
+          return rgb;
+        };
+        // up to 3 clearly different colors of the cover (the background lights are built from these, so they always match the artwork)
+        const picked = [bins.indexOf(best)], order = bins.map((b, i) => i).sort((a, b) => bins[b].w - bins[a].w);
+        for (const i of order) {
+          if (picked.length >= 3 || bins[i].w < best.w * 0.22) break;
+          if (picked.every(j => { const d = Math.abs(i - j); return Math.min(d, 12 - d) >= 2; })) picked.push(i);
+        }
+        dominantColor.palette = picked.map(i => rgbToHex(...fix(bins[i])));
+        resolve(rgbToHex(...fix(best)));
       } catch (e) { resolve(null); }
     };
     img.onerror = () => resolve(null);
@@ -228,8 +306,8 @@ function dominantColor(src) {
   });
 }
 async function updateDynamicAccent(src) {
-  if (!S.user.settings.dynamicColor || !src) S.dynamicAccent = null;
-  else S.dynamicAccent = await dominantColor(src);
+  if (!S.user.settings.dynamicColor || !src) { S.dynamicAccent = null; S.dynamicPalette = null; }
+  else { dominantColor.palette = null; S.dynamicAccent = await dominantColor(src); S.dynamicPalette = S.dynamicAccent ? dominantColor.palette : null; }
   applyAccent(S.dynamicAccent || baseAccent());
 }
 
@@ -241,6 +319,34 @@ const DEFAULT_SHORTCUTS = {
   search: 'Ctrl+F', panel: 'Ctrl+I', queue: 'Ctrl+Q'
 };
 
+/* ----- Graphics quality (Liquid Glass) -----
+   Every option maps to a data-gfx-* attribute on <html>; liquidglass.css does the rest. Presets are just named combinations. */
+const GFX_OPTS = {
+  motion: { label: 'Background motion', hint: 'How often the slow movement of the colored light is updated. Fewer updates = less work for the graphics card.',
+            vals: [['off', 'Off'], ['8', '8 fps'], ['12', '12 fps'], ['24', '24 fps'], ['smooth', 'Smooth']] },
+  glass:  { label: 'Glass panels', hint: 'Flat: translucent panels without blur (lightest). Soft: light live blur. Full: the complete liquid glass, with blur and extra gloss on buttons.',
+            vals: [['flat', 'Flat'], ['soft', 'Soft blur'], ['full', 'Full glass']] },
+  float:  { label: 'Menus and dialogs', hint: 'Blur behind menus, dialogs, notifications and the column header.',
+            vals: [['solid', 'Solid'], ['light', 'Light blur'], ['full', 'Full blur']] },
+  shadow: { label: 'Soft shadows', hint: 'The large shadows under panels and dialogs.', vals: [['on', 'On'], ['off', 'Off']] },
+  text:   { label: 'Text shadow', hint: 'A faint shadow that keeps the text crisp over bright glass.', vals: [['on', 'On'], ['off', 'Off']] }
+};
+const GFX_PRESETS = {
+  min:  { motion: 'off',    glass: 'flat', float: 'solid', shadow: 'off', text: 'off' },
+  low:  { motion: '8',      glass: 'flat', float: 'light', shadow: 'on',  text: 'off' },
+  mid:  { motion: '12',     glass: 'soft', float: 'light', shadow: 'on',  text: 'on' },
+  high: { motion: '24',     glass: 'full', float: 'full',  shadow: 'on',  text: 'on' },
+  max:  { motion: 'smooth', glass: 'full', float: 'full',  shadow: 'on',  text: 'on' }
+};
+const GFX_PRESET_LABELS = [['min', 'Minimum'], ['low', 'Low'], ['mid', 'Medium'], ['high', 'High'], ['max', 'Maximum']];
+const gfxPresetOf = g => (GFX_PRESET_LABELS.find(([k]) => Object.keys(GFX_OPTS).every(o => GFX_PRESETS[k][o] === g[o])) || ['custom'])[0];
+function applyGfx() {
+  const g = (typeof S !== 'undefined' && S.user && S.user.settings && S.user.settings.gfx) || GFX_PRESETS.low, root = document.documentElement;
+  for (const o of Object.keys(GFX_OPTS)) root.dataset['gfx' + o[0].toUpperCase() + o.slice(1)] = g[o];
+  if (typeof fpsMeter === 'function') fpsMeter(g.showFps === 'on');
+  if (typeof lgDriftSet === 'function' && g.motion !== lgDriftSet.last) { lgDriftSet.last = g.motion; lgDriftSet(); }
+}
+
 const defaultUser = () => ({
   version: 8, musicRoot: '', lastRoot: '', syncFolder: '',
   pins: [], movedFolders: [], folderOrder: [], folderPrefs: {}, hiddenFolders: [], images: {},
@@ -249,7 +355,8 @@ const defaultUser = () => ({
     volume: 1, muted: false, showRemaining: false, repeat: 'off', shuffles: {}, sorts: {}, sidebarWidth: 260,
     panel: { open: true, mode: 'now', side: 'right', width: 300 },
     theme: 'dark', themeColor: '#16213a', accent: '#1ed760', dynamicColor: false,
-    bgMode: 'auto', bgCount: 3, bgColors: ['#1ed760', '#7c4dff', '#00e5ff', '#ff4081', '#ffc400'],   // Liquid Glass background: automatic or 1-5 own colors
+    bgMode: 'auto', bgCount: 3, bgColors: ['#1ed760', '#14c4a0', '#22a6e0', '#ff4081', '#ffc400'],   // Liquid Glass background: automatic or 1-5 own colors
+    gfx: Object.assign({ preset: 'low', showFps: 'off' }, GFX_PRESETS.low),   // graphics quality (Settings > Graphics); 'low' = just above the minimum
     adv: { covers: true, tags: true },
     shortcuts: Object.assign({}, DEFAULT_SHORTCUTS), last: null
   }

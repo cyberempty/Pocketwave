@@ -234,7 +234,7 @@ async function captureShortcut(action) {
 /* ===== settings ===== */
 /* Settings: Library, Appearance, Shortcuts */
 const sw = (id, on, dis) => `<label class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}><span></span></label>`;
-const SET_TABS = [['library', 'Library'], ['appearance', 'Appearance'], ['shortcuts', 'Shortcuts']];
+const SET_TABS = [['library', 'Library'], ['appearance', 'Appearance'], ['graphics', 'Graphics'], ['shortcuts', 'Shortcuts']];
 
 function openSettings(tab) {
   S.settingsTab = tab || S.settingsTab || 'library';
@@ -252,7 +252,7 @@ function openSettings(tab) {
 function renderSettingsTab() {
   const body = $('#set-body'); if (!body) return;
   document.querySelectorAll('.set-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === S.settingsTab));
-  const t = { library: tabLibrary, appearance: tabAppearance, shortcuts: tabShortcuts }[S.settingsTab];
+  const t = { library: tabLibrary, appearance: tabAppearance, graphics: tabGraphics, shortcuts: tabShortcuts }[S.settingsTab];
   const keep = body.scrollTop;
   body.innerHTML = t.html();
   t.bind(body);
@@ -463,6 +463,33 @@ const tabAppearance = {
 };
 
 /* ---------- Shortcuts ---------- */
+const tabGraphics = {
+  html() {
+    const g = S.user.settings.gfx, cur = gfxPresetOf(g);
+    return `
+    <div class="set-sec"><h3>Graphics quality</h3>
+      <div class="radio-row">${GFX_PRESET_LABELS.map(([k, l]) => `<button class="chip ${cur === k ? 'on' : ''}" data-gp="${k}">${l}</button>`).join('')}${cur === 'custom' ? '<button class="chip on" disabled>Custom</button>' : ''}</div>
+      <div class="hint">Pick what suits your computer: on a powerful PC use High or Maximum for the full Liquid Glass look; on an older one use Minimum or Low and the app stays smooth. Changes apply immediately.</div>
+    </div>
+    <div class="set-sec"><h3>Advanced</h3>
+      ${Object.entries(GFX_OPTS).map(([o, d]) => `<div class="sub-h">${d.label}</div>
+      <div class="radio-row">${d.vals.map(([v, l]) => `<button class="chip ${g[o] === v ? 'on' : ''}" data-go="${o}" data-gv="${v}">${l}</button>`).join('')}</div>
+      <div class="hint">${d.hint}</div>`).join('')}
+    </div>
+    <div class="set-sec"><h3>Diagnostics</h3>
+      <div class="sub-h">FPS counter</div>
+      <div class="radio-row">${[['off', 'Off'], ['on', 'On']].map(([v, l]) => `<button class="chip ${g.showFps === v ? 'on' : ''}" data-gf="${v}">${l}</button>`).join('')}</div>
+      <div class="hint">Shows the frames per second and the slowest recent frame in the top-right corner, to check whether a setting really helps. 60 fps is perfectly smooth.</div>
+    </div>`;
+  },
+  bind(b) {
+    const g = S.user.settings.gfx;
+    b.querySelectorAll('[data-gf]').forEach(x => x.onclick = () => { g.showFps = x.dataset.gf; scheduleSave(); applyGfx(); renderSettingsTab(); });
+    const done = () => { g.preset = gfxPresetOf(g); scheduleSave(); applyGfx(); renderSettingsTab(); };
+    b.querySelectorAll('[data-gp]').forEach(x => x.onclick = () => { Object.assign(g, GFX_PRESETS[x.dataset.gp]); done(); });
+    b.querySelectorAll('[data-go]').forEach(x => x.onclick = () => { g[x.dataset.go] = x.dataset.gv; done(); });
+  }
+};
 const tabShortcuts = {
   html() {
     const sc = S.user.settings.shortcuts;
@@ -663,6 +690,11 @@ function mergeUser(saved) {
   st.bgColors = d.settings.bgColors.map((c, i) => (sv.bgColors && /^#[0-9a-f]{6}$/i.test(sv.bgColors[i] || '')) ? sv.bgColors[i].toLowerCase() : c);
   st.bgCount = Math.max(1, Math.min(5, Math.round(Number(st.bgCount)) || 3));
   if (st.bgMode !== 'custom') st.bgMode = 'auto';
+  const dg = defaultUser().settings.gfx;   // (d.settings is replaced by the saved settings above, so take a fresh default)
+  st.gfx = Object.assign({}, dg, sv.gfx || {});   // graphics quality: keep only valid values
+  for (const [o, def] of Object.entries(GFX_OPTS)) if (!def.vals.some(([v]) => v === st.gfx[o])) st.gfx[o] = dg[o];
+  st.gfx.showFps = st.gfx.showFps === 'on' ? 'on' : 'off';
+  st.gfx.preset = gfxPresetOf(st.gfx);
   st.shortcuts = Object.assign({}, DEFAULT_SHORTCUTS, sv.shortcuts || {});
   for (const k of ['sorts', 'shuffles']) if (!st[k] || typeof st[k] !== 'object') st[k] = {};
   u.settings = st;
@@ -710,34 +742,56 @@ async function init() {
   if (S.user.musicRoot) rescan({ manual: false, first: !S.tracks.length }).then(applyWatch);
   else applyWatch();
 }
-init();
 
-/* ----- Liquid glass: slow drift of the colored background -----
-   Same movement as before (38 s, back and forth, same positions, rotation and zoom), but the position is updated
-   8 times per second instead of 60. The picture is blurred and moves a fraction of a pixel per update, so it looks
-   identical, while the glass panels above it are re-drawn far less often. It pauses while the Now playing screen
-   covers the window or the window is hidden. */
-(function lgDrift() {
-  const el = document.getElementById('lgbg');
-  if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const K = [[-4, -2, 0, 2], [6, 4, 8, 2.16], [-2, 6, -6, 2.06]];          // x %, y %, rotation deg, scale
-  const ease = u => {                                                        // CSS ease-in-out: cubic-bezier(.42, 0, .58, 1)
-    let lo = 0, hi = 1, s = u;
-    for (let i = 0; i < 24; i++) {
-      s = (lo + hi) / 2;
-      const x = 3 * (1 - s) * (1 - s) * s * .42 + 3 * (1 - s) * s * s * .58 + s * s * s;
-      if (x < u) lo = s; else hi = s;
-    }
-    return 3 * (1 - s) * s * s + s * s * s;                                  // y of the curve: control points y1 = 0, y2 = 1
-  };
-  const t0 = performance.now();
-  const draw = () => {
-    if (document.hidden || document.documentElement.classList.contains('np-open')) return;
-    const t = ((performance.now() - t0) / 1000) % 76;
-    const x = t < 38 ? t / 38 : 2 - t / 38;                                  // forward, then backward
-    const k = Math.min(1, Math.floor(x * 2)), f = ease(x * 2 - k);
-    const a = K[k], b = K[k + 1], m = i => a[i] + (b[i] - a[i]) * f;
-    el.style.transform = `translate3d(${m(0).toFixed(3)}%,${m(1).toFixed(3)}%,0) rotate(${m(2).toFixed(3)}deg) scale(${m(3).toFixed(4)})`;
-  };
-  draw(); setInterval(draw, 125);
+/* ----- Liquid glass: slow drift of the colored background (38 s forward, 38 s back, ease-in-out) -----
+   Driven from here, NOT by a CSS animation: a running CSS animation made scrolling slower even while paused.
+   It updates 8 / 12 / 24 times a second (or every frame for "Smooth"), chosen in Settings > Graphics, and does nothing at all while
+   scrolling, resizing, with a dialog / menu / Now playing open, with the window hidden, or with the motion Off. ----- */
+const LG_K = [[-4, -2, 2], [6, 4, 2.16], [-2, 6, 2.06]];   // x %, y %, scale (no rotation: a rotated layer is very expensive to composite on big windows)
+const lgEase = u => {                                                 // CSS ease-in-out: cubic-bezier(.42, 0, .58, 1)
+  let lo = 0, hi = 1, s = u;
+  for (let i = 0; i < 24; i++) { s = (lo + hi) / 2; const x = 3 * (1 - s) * (1 - s) * s * .42 + 3 * (1 - s) * s * s * .58 + s * s * s; if (x < u) lo = s; else hi = s; }
+  return 3 * (1 - s) * s * s + s * s * s;
+};
+const lgDrift = { t0: performance.now(), busyUntil: 0, timer: 0, raf: 0 };
+function lgDriftStep() {
+  const el = document.getElementById('lgbg'); if (!el) return;
+  const root = document.documentElement;
+  if (performance.now() < lgDrift.busyUntil || document.hidden || root.classList.contains('np-open') || document.querySelector('.overlay') || !document.getElementById('menu').hidden) return;
+  const t = ((performance.now() - lgDrift.t0) / 1000) % 76, x = t < 38 ? t / 38 : 2 - t / 38;
+  const k = Math.min(1, Math.floor(x * 2)), f = lgEase(x * 2 - k), A = LG_K[k], B = LG_K[k + 1], m = i => A[i] + (B[i] - A[i]) * f;
+  el.style.transform = `translate3d(${m(0).toFixed(3)}%,${m(1).toFixed(3)}%,0) scale(${m(2).toFixed(4)})`;
+}
+function lgDriftSet() {   // called whenever the graphics settings change
+  clearTimeout(lgDrift.timer); cancelAnimationFrame(lgDrift.raf);
+  const mo = S.user.settings.gfx.motion;
+  if (mo === 'off') return;
+  if (mo === 'smooth') { const loop = () => { lgDriftStep(); lgDrift.raf = requestAnimationFrame(loop); }; loop(); return; }
+  const every = { '8': 125, '12': 83, '24': 41 }[mo] || 125;
+  const tick = () => { lgDriftStep(); lgDrift.timer = setTimeout(tick, every); };
+  tick();
+}
+(function () {
+  const busy = () => { lgDrift.busyUntil = performance.now() + 250; };
+  addEventListener('resize', busy, { passive: true });
+  addEventListener('scroll', busy, { capture: true, passive: true });
+  addEventListener('wheel', busy, { passive: true });
 })();
+
+/* ----- FPS counter (Settings > Graphics > Diagnostics) ----- */
+function fpsMeter(on) {
+  let el = document.getElementById('fps-meter');
+  if (!on) { if (el) { el._stop = true; el.remove(); } return; }
+  if (el) return;
+  el = document.createElement('div'); el.id = 'fps-meter'; el.textContent = '… fps'; document.body.appendChild(el);
+  let n = 0, worst = 0, last = performance.now(), t0 = last;
+  const f = now => {
+    if (el._stop) return;
+    n++; worst = Math.max(worst, now - last); last = now;
+    if (now - t0 >= 500) { el.textContent = Math.round(n * 1000 / (now - t0)) + ' fps · worst ' + Math.round(worst) + ' ms'; n = 0; worst = 0; t0 = now; }
+    requestAnimationFrame(f);
+  };
+  requestAnimationFrame(f);
+}
+
+init();

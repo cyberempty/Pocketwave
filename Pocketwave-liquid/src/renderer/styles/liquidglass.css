@@ -14,7 +14,7 @@
   --glass-low:rgba(255,255,255,.05);
   --glass-shadow:0 14px 44px rgba(0,0,0,.38);
   --glass-r:24px;
-  --glass-veil:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06));
+  --glass-veil:linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,.10));   /* a bit brighter: replaces brightness(1.12) */
   --glass-sheen:linear-gradient(135deg,rgba(255,255,255,.17) 0%,rgba(255,255,255,.04) 32%,rgba(255,255,255,0) 55%,rgba(255,255,255,.05) 100%);
   --r:var(--glass-r);
 }
@@ -28,30 +28,15 @@
   --glass-sheen:linear-gradient(135deg,rgba(255,255,255,.7) 0%,rgba(255,255,255,.18) 35%,rgba(255,255,255,0) 60%,rgba(255,255,255,.2) 100%);
 }
 
-@property --lg1{syntax:'<color>';inherits:true;initial-value:#1ed760}
-@property --lg2{syntax:'<color>';inherits:true;initial-value:#1ed760}
-@property --lg3{syntax:'<color>';inherits:true;initial-value:#1ed760}
-@property --lg4{syntax:'<color>';inherits:true;initial-value:#1ed760}
-@property --lg5{syntax:'<color>';inherits:true;initial-value:#1ed760}
-@property --lg6{syntax:'<color>';inherits:true;initial-value:#1ed760}
-:root{transition:--lg1 .9s,--lg2 .9s,--lg3 .9s,--lg4 .9s,--lg5 .9s,--lg6 .9s}
 /* ---------- Living background (what the glass refracts) ---------- */
 html,body{background:var(--bg)}
 #lgbg{
   /* Drawn at half size and scaled x2 (see the drift in app.js): the picture is blurred anyway, so it looks the same but costs a quarter of the work */
   position:fixed;left:15%;top:15%;width:70%;height:70%;z-index:0;pointer-events:none;will-change:transform;
-  background:
-    radial-gradient(30% 36% at 16% 18%,color-mix(in srgb,var(--lg1) 85%,transparent),transparent 72%),
-    radial-gradient(28% 34% at 86% 14%,color-mix(in srgb,var(--lg2) 75%,transparent),transparent 72%),
-    radial-gradient(32% 38% at 52% 50%,color-mix(in srgb,var(--lg1) 45%,transparent),transparent 74%),
-    radial-gradient(30% 36% at 84% 86%,color-mix(in srgb,var(--lg3) 70%,transparent),transparent 72%),
-    radial-gradient(28% 34% at 14% 84%,color-mix(in srgb,var(--lg5) 65%,transparent),transparent 72%),
-    radial-gradient(22% 28% at 40% 14%,color-mix(in srgb,var(--lg4) 45%,transparent),transparent 72%),
-    radial-gradient(22% 30% at 12% 52%,color-mix(in srgb,var(--lg3) 55%,transparent),transparent 72%),
-    radial-gradient(22% 30% at 90% 52%,color-mix(in srgb,var(--lg2) 55%,transparent),transparent 72%),
-    radial-gradient(24% 30% at 66% 70%,color-mix(in srgb,var(--lg6) 35%,transparent),transparent 72%);
-  filter:blur(13px) saturate(1.3);
+  /* The colored lights are drawn by lgPaint() (core.js) onto this small 320x180 canvas; the GPU just stretches it, so the cost no longer grows with the window size */
+  transform:translate3d(-4%,-2%,0) scale(2);
 }
+
 :root[data-theme="light"] #lgbg{opacity:.8}
 /* Custom title bar zone: the glass background continues behind the window buttons */
 #app{position:relative;z-index:1;padding:0 8px 8px;gap:8px}
@@ -68,9 +53,7 @@ html,body{background:var(--bg)}
 
 /* ---------- Glass surfaces ---------- */
 #main,.panel,#rpanel,#player{
-  background:var(--glass-sheen),var(--glass-veil),color-mix(in srgb,var(--panel) calc(var(--glass-a) * 100%),transparent);
-  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.12);
-  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.12);
+  background:var(--glass-sheen),var(--glass-veil),color-mix(in srgb,var(--panel) calc(var(--glass-a) * 100%),transparent);   /* no backdrop-filter: it sits over the (already soft) background only, so a live blur here costs a lot and shows nothing */
   border:1px solid var(--glass-rim);
   border-radius:var(--glass-r);
   box-shadow:
@@ -87,7 +70,7 @@ html,body{background:var(--bg)}
 /* Sticky column header: glass too, so rows blur under it */
 .colhead{
   background:color-mix(in srgb,var(--panel) 55%,transparent);
-  -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   border-bottom:1px solid var(--glass-rim);border-radius:14px;margin-top:4px;
 }
 
@@ -98,7 +81,6 @@ html,body{background:var(--bg)}
   background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
   border-color:var(--glass-rim);
   box-shadow:inset 0 1px 0 var(--glass-hi),0 6px 18px rgba(0,0,0,.22);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
 }
 :root[data-theme="light"] .nav-i.on{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.6))}
 .tile,.qimg,.himg,.card-img,.q-tile,.cover,.pv-cover{border-radius:14px;box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 14px rgba(0,0,0,.25)}
@@ -117,7 +99,6 @@ html,body{background:var(--bg)}
 .qtile:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08))}
 
 /* ---------- Buttons, search, chips ---------- */
-.top-btn,.ibtn:not(.dots){-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .top-btn{
   background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
   border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 12px rgba(0,0,0,.2);
@@ -127,7 +108,6 @@ html,body{background:var(--bg)}
 .search{
   height:46px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
   border:1px solid var(--glass-rim);box-shadow:inset 0 1.5px 2px rgba(0,0,0,.18),inset 0 -1px 0 var(--glass-low);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
 }
 .search:hover{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.08))}
 .search:focus-within{border-color:var(--g);box-shadow:inset 0 1.5px 2px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--g) 32%,transparent)}
@@ -143,7 +123,6 @@ html,body{background:var(--bg)}
 .btn{
   background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06));
   border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi),0 4px 14px rgba(0,0,0,.2);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
 }
 .btn:hover:not(:disabled){border-color:var(--glass-hi);background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
 .btn.pri{
@@ -166,7 +145,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 
 /* ---------- Floating layers: menus, dialogs, toasts ---------- */
 #menu,.modal,.toast{
-  -webkit-backdrop-filter:blur(28px) saturate(190%);backdrop-filter:blur(28px) saturate(190%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);
   border:1px solid var(--glass-rim);
   box-shadow:inset 0 1.5px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-low),0 24px 60px rgba(0,0,0,.5);
 }
@@ -184,7 +163,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 .npf-btn,.npf-close,.npf-full{
   background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.06));
   border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);
-  -webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);
+  
 }
 .npf-btn:hover{background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.12))}
 .npf-cover{border-radius:30px;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),0 30px 80px rgba(0,0,0,.55)}
@@ -224,7 +203,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 .rhead{gap:8px}
 
 /* Soft shadow keeps the texts crisp over bright glass (dark themes) */
-:root:not([data-theme="light"]) :is(#side,#main,#rpanel,#player){text-shadow:0 1px 3px rgba(0,0,0,.32)}
+:root:not([data-theme="light"]):not([data-gfx-text="off"]) :is(#side,#main,#rpanel,#player){text-shadow:0 1px 3px rgba(0,0,0,.32)}
 
 /* ---------- Settings: own background colors ---------- */
 .bg-row{display:flex;align-items:center;gap:10px;margin-top:10px}
@@ -234,7 +213,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 
 /* ---------- Now playing full screen open: nothing underneath is drawn, so it costs no CPU / GPU / memory ---------- */
 .np-open #app,.np-open #titlebar{visibility:hidden}
-.np-open #lgbg{display:none}
+.np-open #lgbg{visibility:hidden;animation-play-state:paused}
 
 /* ---------- Nothing gets cut on hover ---------- */
 .card,.hcard,.qtile{transform:none !important}
@@ -266,3 +245,44 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 .npf-seek input[type=range]::-webkit-slider-thumb,.npf-vol input[type=range]::-webkit-slider-thumb{margin-top:-5.5px}
 .npf-vol .npf-btn.npf-small{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .npf-vol .npf-btn.npf-small:hover{background:rgba(255,255,255,.12)}
+
+
+/* =====================================================================
+   Graphics quality (Settings > Graphics): data-gfx-* attributes on <html>
+   ===================================================================== */
+/* Glass panels: flat = no blur (the default rules above); soft = light blur; full = the complete glass */
+:root[data-gfx-glass="soft"] :is(#main,.panel,#rpanel,#player){-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+:root[data-gfx-glass="full"]{--glass-veil:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06))}
+:root[data-gfx-glass="full"] :is(#main,.panel,#rpanel,#player){-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(125%) brightness(1.08);backdrop-filter:blur(var(--glass-blur)) saturate(125%) brightness(1.08)}
+:root[data-gfx-glass="full"] :is(.nav-i.on,.btn){-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+:root[data-gfx-glass="full"] :is(.top-btn,.ibtn:not(.dots)){-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+:root[data-gfx-glass="full"] .search{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+:root[data-gfx-glass="full"] :is(.npf-btn,.npf-close,.npf-full){-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%)}
+:root[data-gfx-glass="full"] .npf-vol .npf-btn.npf-small{-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* Menus, dialogs, notifications, column header, dark overlay */
+:root[data-gfx-float="solid"] :is(#menu,.modal,.toast,.colhead,.overlay){-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-gfx-float="solid"] #menu{background:var(--glass-sheen),color-mix(in srgb,var(--menu) 94%,transparent)}
+:root[data-gfx-float="solid"] .modal{background:var(--glass-sheen),color-mix(in srgb,var(--modal) 94%,transparent)}
+:root[data-gfx-float="solid"] .toast{background:var(--glass-sheen),color-mix(in srgb,var(--toast) 94%,transparent)}
+:root[data-gfx-float="solid"] .colhead{background:color-mix(in srgb,var(--panel) 85%,transparent)}
+:root[data-gfx-float="light"] :is(#menu,.modal,.toast){-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+:root[data-gfx-float="light"] .overlay{-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-gfx-float="light"] .colhead{-webkit-backdrop-filter:none;backdrop-filter:none;background:color-mix(in srgb,var(--panel) 85%,transparent)}
+:root[data-gfx-float="full"] :is(#menu,.modal,.toast){-webkit-backdrop-filter:blur(28px) saturate(190%);backdrop-filter:blur(28px) saturate(190%)}
+:root[data-gfx-float="full"] .colhead{-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%)}
+
+/* Soft shadows */
+:root[data-gfx-shadow="off"]{--glass-shadow:none}
+:root[data-gfx-shadow="off"] :is(#menu,.modal,.toast){box-shadow:inset 0 1.5px 0 var(--glass-hi),inset 0 -1px 0 var(--glass-low)}
+
+/* FPS counter */
+#fps-meter{position:fixed;top:48px;right:12px;z-index:9999;padding:4px 10px;border-radius:999px;font:600 12px/1.4 var(--font,system-ui);color:#fff;background:rgba(0,0,0,.6);pointer-events:none;font-variant-numeric:tabular-nums}
+
+/* Playlist header (title + cover tile): its accent tint fades to the new color over 0.9 s, like the background lights, instead of switching at once.
+   --hc follows --g but is registered, so only these elements animate (a transition on :root would restyle the whole page). */
+@property --hc{syntax:'<color>';inherits:false;initial-value:#1ed760}
+#hero,.hero-art{--hc:var(--g);transition:--hc .9s}
+#hero{background:linear-gradient(180deg,color-mix(in srgb,var(--hc) 32%,transparent) 0%,color-mix(in srgb,var(--hc) 10%,transparent) 70%,transparent 100%)}
+.hero-art{background:linear-gradient(135deg,var(--hc) 0%,color-mix(in srgb,var(--hc) 30%,#000) 100%) center/cover no-repeat}
+.hero-art.fav{background:linear-gradient(135deg,color-mix(in srgb,var(--hc) 55%,#fff) 0%,color-mix(in srgb,var(--hc) 40%,#000) 100%)}

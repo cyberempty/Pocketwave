@@ -21,6 +21,7 @@ This repository contains two editions of the same player. They share the same fe
 | Disk (extracted program) | about 230 MB | about 230 MB |
 | Playlist page color taken from its photo | Yes | No |
 | Background colors (automatic or your own, 1-5) | - | Yes |
+| Graphics quality presets (from Minimum to Maximum) | - | Yes |
 | Best for | Older or low-end computers, long listening sessions | Modern computers, a more visual look |
 | Folder | `Pocketwave-lite/` | `Pocketwave-liquid/` |
 
