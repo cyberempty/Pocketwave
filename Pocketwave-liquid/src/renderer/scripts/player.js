@@ -45,6 +45,7 @@ function startTrack(p, fromQueue, opts) {
   opts = opts || {};
   S.currentPath = p; S.curFromQueue = fromQueue; S.loaded = true; S.switching = true;
   recordPlayed(p);
+  statNewPlay();
   S.resumeAt = opts.resumeAt != null ? opts.resumeAt : 0;
   audio.src = toFileUrl(p);
   audio.play().catch(() => {});
@@ -130,6 +131,48 @@ function restoreLast() {
   updatePlayer(); setCover(curTrack()); renderSidebar(); renderPanel();
 }
 
+/* ----- Listening statistics -----
+   Time is counted from the audio clock while a song really plays (seeking, pausing and buffering are not counted).
+   Everything stays in the local user file: total time, time per day and, per song, time and plays. */
+const dayKey = d => { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function cleanStats(s) {
+  const o = { total: 0, plays: 0, days: {}, songs: {}, since: 0 };
+  if (!s || typeof s !== 'object') return o;
+  const num = v => (Number.isFinite(+v) && +v > 0) ? +v : 0;
+  o.total = num(s.total); o.plays = Math.floor(num(s.plays)); o.since = num(s.since);
+  const keep = dayKey(new Date(Date.now() - 400 * 864e5));       // about 13 months of daily totals
+  for (const [k, v] of Object.entries(s.days || {})) if (/^\d{4}-\d\d-\d\d$/.test(k) && k >= keep && num(v)) o.days[k] = num(v);
+  for (const [p, e] of Object.entries(s.songs || {})) {
+    if (!e || typeof e !== 'object' || (!num(e.sec) && !num(e.plays))) continue;
+    o.songs[p] = { sec: num(e.sec), plays: Math.floor(num(e.plays)), title: String(e.title || ''), artist: String(e.artist || ''), album: String(e.album || ''), dur: num(e.dur) };
+  }
+  return o;
+}
+let statLast = -1;
+const statBreak = () => { statLast = -1; };
+function statNewPlay() { S.playSec = 0; S.playCounted = false; statLast = -1; }
+function statTick() {
+  if (audio.paused || audio.seeking || !S.currentPath || !S.loaded || S.switching) { statLast = -1; return; }
+  const ct = audio.currentTime, d = ct - statLast;
+  const prev = statLast;
+  statLast = ct;
+  if (prev < 0 || !(d > 0 && d < 1.5)) return;          // first tick after a pause, or a jump from seeking: not listening time
+  const t = curTrack(), st = S.user.stats;
+  if (!t) return;
+  if (!st.since) st.since = Date.now();
+  st.total += d;
+  const k = dayKey();
+  st.days[k] = (st.days[k] || 0) + d;
+  const e = st.songs[t.path] || (st.songs[t.path] = { sec: 0, plays: 0, title: t.title, artist: t.artist || '', album: t.album || '', dur: t.duration || 0 });
+  e.sec += d;
+  S.playSec = (S.playSec || 0) + d;
+  // A play counts after 30 seconds (or half of a shorter song), like on the big streaming services
+  if (!S.playCounted && S.playSec >= Math.min(30, (t.duration || 60) * 0.5)) {
+    S.playCounted = true; e.plays++; st.plays++;
+    e.title = t.title; e.artist = t.artist || ''; e.album = t.album || ''; e.dur = t.duration || 0;
+  }
+}
+
 /* ----- Audio events ----- */
 onAudio('loadedmetadata', () => {
   if (S.resumeAt > 0 && S.resumeAt < audio.duration) audio.currentTime = S.resumeAt;
@@ -141,7 +184,7 @@ for (const ev of ['play', 'pause', 'playing', 'emptied']) {
   onAudio(ev, () => { if (ev === 'pause') saveLastPosition(); updatePlayer(); paintRows(true); updateHeroPlay(); renderSidebar(); });
 }
 onAudio('ended', () => {
-  if (S.user.settings.repeat === 'one') { audio.currentTime = 0; audio.play().catch(() => {}); }
+  if (S.user.settings.repeat === 'one') { statNewPlay(); audio.currentTime = 0; audio.play().catch(() => {}); }
   else next(true);
 });
 // Only the last song played is resumed when the program is opened again, from the exact point where it stopped
@@ -150,8 +193,10 @@ function saveLastPosition() {
   S.user.settings.last = { path: S.currentPath, pos: audio.currentTime, ctx: S.ctx };
   scheduleSave();
 }
+for (const ev of ['pause', 'seeking', 'emptied', 'waiting']) onAudio(ev, statBreak);
 let lastSave = 0, dragging = false;
 onAudio('timeupdate', () => {
+  statTick();
   if (!dragging) updateProgress();
   const now = Date.now();
   if (now - lastSave > 1000) { lastSave = now; saveLastPosition(); }

@@ -199,11 +199,10 @@ function moveFolderBack(id) {
 }
 function renderSidebar() {
   if (S.drag) { S.pendingSidebar = true; return; } // do not rebuild the list while an item is being dragged
-  const uq = S.userQueue.length;
   $('#nav').innerHTML =
     navBtn('home', 'home', 'Home', 0) +
-    navBtn('all', 'note', 'All songs', S.all.length) +
-    `<button class="nav-i ${panelSt().open && panelSt().mode === 'queue' ? 'on' : ''}" data-type="queue" title="Queue">${ic('queue')}<span class="l">Queue</span>${uq ? `<span class="n">${uq}</span>` : ''}</button>`;
+    navBtn('stats', 'chart', 'Statistics', 0) +
+    navBtn('all', 'note', 'All songs', S.all.length);
   let h = `<div class="sec-h"><span>My playlists</span><button id="newpl" class="ibtn" title="Create a playlist">${ic('plus')}</button></div>`;
   const mine = myPlaylistsItems();
   if (!mine.length) h += `<div class="hide-narrow" style="padding:4px 14px;color:var(--tx3);font-size:12.5px">No playlists yet</div>`;
@@ -476,13 +475,13 @@ function updateHeroPlay() {
 function renderMain() {
   // First start (no music folder yet): the "choose folder" screen. From then on the Home page is the start page.
   const welcome = !S.user.musicRoot && !S.query && (S.view.type === 'all' || S.view.type === 'home');
-  const isHome = !welcome && curView().type === 'home';
+  const isHome = !welcome && (curView().type === 'home' || curView().type === 'stats');
   $('#home').hidden = !isHome;
   S.items = (welcome || isHome) ? [] : currentItems();
   const hero = $('#hero'), empty = $('#empty'), head = $('#colhead'), rows = $('#rows');
   if (isHome) {
     hero.hidden = true; head.hidden = true; empty.hidden = true; rows.style.height = '0'; rows.innerHTML = '';
-    renderHome();
+    if (curView().type === 'stats') renderStats(); else renderHome();
     return;
   }
   if (welcome) {

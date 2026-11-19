@@ -3,11 +3,15 @@
 **The classic, light edition of Pocketwave: a flat dark interface, fast and easy on memory.**
 
 <p align="center">
-  <img src="../images/01-lite-home-playing.png" alt="Pocketwave Lite: Home page while playing" width="100%">
+  <img src="../images/03-lite-playlist-playing.png" alt="Pocketwave Lite: playlist page while playing" width="100%">
 </p>
 <p align="center">
-  <img src="../images/03-lite-now-playing.png" alt="Pocketwave Lite: Now playing screen" width="49%">
-  <img src="../images/02-lite-settings.png" alt="Pocketwave Lite: Appearance settings" width="49%">
+  <img src="../images/01-lite-welcome.png" alt="Pocketwave Lite: welcome screen" width="49%">
+  <img src="../images/02-lite-home.png" alt="Pocketwave Lite: Home page" width="49%">
+</p>
+<p align="center">
+  <img src="../images/04-lite-now-playing.png" alt="Pocketwave Lite: Now playing screen" width="49%">
+  <img src="../images/05-lite-settings.png" alt="Pocketwave Lite: Appearance settings" width="49%">
 </p>
 
 Pocketwave Lite is the standard edition. It uses flat, dark Spotify-style panels with no heavy visual effects, so it starts fast and uses the least memory: a good choice for older or low-end computers and for leaving the player open all day.
@@ -57,6 +61,9 @@ If the **Releases** page offers a ZIP for your system, extract the **whole** fol
 - **macOS**: `PocketwaveData` is created next to `Pocketwave.app` (never inside it); keep the app in a folder you can write to, not `/Applications`. Keyboard media keys may need *System Settings → Privacy & Security → Accessibility*.
 
 ## Features
+
+### Statistics
+The **Statistics** button in the sidebar opens a Spotify-style summary of your listening: **total minutes listened**, time listened today, songs played, different songs and your daily listening streak, plus your **most played song, artist and album**, a chart of the **last 14 days** and your top songs, artists and albums. Time is counted only while a song really plays (pausing and skipping around do not count) and a play is counted after 30 seconds. Everything is stored locally in the Pocketwave data folder; **Reset statistics** at the bottom of the page clears it.
 
 ### Home page
 Pocketwave opens on a Spotify-style Home page: a greeting, quick-access tiles (All songs and your latest playlists and folders) and rows of cards: **Recently played**, **Your playlists**, **Folders**, **Recommended for you** (a daily pick from your own library, computed locally) and **Recently added**. Hover a card and press Play to start it **without leaving Home**; click anywhere else on the card to open it. The very first start shows a welcome screen to choose your music folder.

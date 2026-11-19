@@ -5,8 +5,8 @@
 Point it at a folder of music and play. No installer, no account, no Internet connection, no telemetry. Everything Pocketwave saves stays in one folder next to the program.
 
 <p align="center">
-  <img src="images/01-lite-home-playing.png" alt="Pocketwave Lite" width="49%">
-  <img src="images/05-liquid-home-playing.png" alt="Pocketwave Liquid" width="49%">
+  <img src="images/03-lite-playlist-playing.png" alt="Pocketwave Lite: playlist page while playing" width="49%">
+  <img src="images/08-liquid-playlist-playing.png" alt="Pocketwave Liquid: playlist page while playing" width="49%">
 </p>
 <p align="center"><sub>Left: <b>Pocketwave Lite</b> &nbsp;·&nbsp; Right: <b>Pocketwave Liquid</b></sub></p>
 
@@ -35,6 +35,7 @@ The source code of both editions together is only about 500 KB as a ZIP. The por
 - **Your music stays untouched.** Files are only read: never renamed, moved, deleted or modified.
 - **Live folder sync.** Add, rename, move or delete files while the app is open and the library updates by itself. Missing songs show up greyed out in playlists instead of breaking them.
 - **Home page.** Greeting, quick-access tiles, recently played, folders, a daily pick from your own library and recently added songs.
+- **Statistics.** A Spotify-style page with your total minutes listened, most played song, artist and album, the last 14 days and your top songs. Collected and kept only on your computer.
 - **Playlists your way.** Folder playlists are created automatically; make your own, pin, reorder, add photos, import and export M3U / M3U8.
 - **Great playback controls.** Queue, per-playlist shuffle, repeat, resume where you stopped, keyboard media keys and system media controls.
 - **Full-window Now playing screen** with a blurred cover background.

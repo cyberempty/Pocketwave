@@ -286,3 +286,11 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 #hero{background:linear-gradient(180deg,color-mix(in srgb,var(--hc) 32%,transparent) 0%,color-mix(in srgb,var(--hc) 10%,transparent) 70%,transparent 100%)}
 .hero-art{background:linear-gradient(135deg,var(--hc) 0%,color-mix(in srgb,var(--hc) 30%,#000) 100%) center/cover no-repeat}
 .hero-art.fav{background:linear-gradient(135deg,color-mix(in srgb,var(--hc) 55%,#fff) 0%,color-mix(in srgb,var(--hc) 40%,#000) 100%)}
+
+/* ---------- Statistics page ---------- */
+.st-main,.st-tile,.st-fav,.st-chart{border:1px solid var(--glass-rim);box-shadow:inset 0 1px 0 var(--glass-hi),0 6px 18px rgba(0,0,0,.18)}
+.st-main{border-radius:24px;background:linear-gradient(135deg,color-mix(in srgb,var(--g) 40%,rgba(255,255,255,.10)),rgba(255,255,255,.05))}
+.st-tile,.st-fav,.st-chart{border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04))}
+.st-fav.click:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08))}
+.st-row,.st-bar{border-radius:14px}
+.st-cov.sm{border-radius:10px}

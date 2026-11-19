@@ -65,6 +65,7 @@ const P = {
   home: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
   edit: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
   warn: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+  chart: 'M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z',
   pin: 'M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z'
 };
 const ic = k => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${P[k]}"/></svg>`;
@@ -251,7 +252,7 @@ const DEFAULT_SHORTCUTS = {
 const defaultUser = () => ({
   version: 8, musicRoot: '', lastRoot: '', syncFolder: '',
   pins: [], movedFolders: [], folderOrder: [], folderPrefs: {}, hiddenFolders: [], images: {},
-  playlists: [], meta: {}, recent: { songs: [], ctx: [] },   // meta: details of playlist songs that are missing or live outside the library
+  playlists: [], meta: {}, recent: { songs: [], ctx: [] }, stats: { total: 0, plays: 0, days: {}, songs: {}, since: 0 },   // meta: details of playlist songs that are missing or live outside the library
   settings: {
     volume: 1, muted: false, showRemaining: false, repeat: 'off', shuffles: {}, sorts: {}, sidebarWidth: 260,
     panel: { open: true, mode: 'now', side: 'right', width: 300 },
@@ -273,7 +274,7 @@ const S = {
 };
 
 /* ----- Views and their stable keys ----- */
-const viewKey = v => (v.type === 'all' || v.type === 'search') ? v.type : v.type === 'home' ? 'home:' + (v.id || '') : (v.type === 'folder' ? 'fo:' : 'pl:') + v.id;
+const viewKey = v => (v.type === 'all' || v.type === 'search') ? v.type : v.type === 'home' ? 'home:' + (v.id || '') : v.type === 'stats' ? 'stats' : (v.type === 'folder' ? 'fo:' : 'pl:') + v.id;
 const sameView = (a, b) => !!a && !!b && a.type === b.type && (a.id || '') === (b.id || '');
 const shuffleOn = v => !!(v && S.user.settings.shuffles[viewKey(v)]);
 const findPl = id => S.user.playlists.find(p => p.id === id);
@@ -281,6 +282,7 @@ const findFolder = id => S.folders.find(f => f.id === id);
 
 function viewTitle(v) {
   if (v.type === 'all') return 'All songs';
+  if (v.type === 'stats') return 'Statistics';
   if (v.type === 'search') return 'Search results';
   if (v.type === 'home') return { recent: 'Recently played', rec: 'Recommended for you', new: 'Recently added' }[v.id] || 'Home';
   if (v.type === 'folder') { const f = findFolder(v.id); return f ? f.name : 'Folder'; }

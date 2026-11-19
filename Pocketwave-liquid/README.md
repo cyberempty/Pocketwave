@@ -3,14 +3,17 @@
 **The visual edition of Pocketwave: translucent liquid glass panels floating over a living, colored background.**
 
 <p align="center">
-  <img src="../images/04-liquid-welcome.png" alt="Pocketwave Liquid: welcome screen with the liquid glass background" width="100%">
+  <img src="../images/06-liquid-welcome.png" alt="Pocketwave Liquid: welcome screen with the liquid glass background" width="100%">
 </p>
 <p align="center">
-  <img src="../images/05-liquid-home-playing.png" alt="Pocketwave Liquid: Home page while playing" width="100%">
+  <img src="../images/07-liquid-home.png" alt="Pocketwave Liquid: Home page" width="100%">
 </p>
 <p align="center">
-  <img src="../images/07-liquid-now-playing.png" alt="Pocketwave Liquid: Now playing screen" width="49%">
-  <img src="../images/06-liquid-settings.png" alt="Pocketwave Liquid: Appearance settings" width="49%">
+  <img src="../images/08-liquid-playlist-playing.png" alt="Pocketwave Liquid: playlist page while playing" width="100%">
+</p>
+<p align="center">
+  <img src="../images/09-liquid-now-playing.png" alt="Pocketwave Liquid: Now playing screen" width="49%">
+  <img src="../images/10-liquid-settings.png" alt="Pocketwave Liquid: Appearance settings" width="49%">
 </p>
 
 Pocketwave Liquid is the same player as Lite with an extra **liquid glass** layer (`liquidglass.css`): frosted, translucent panels with soft highlights and thin bright rims, drawn over a slowly shifting colored light that follows your accent color and the album cover. It looks richer, and in return it asks more from the graphics system: expect about 300-600 MB of RAM. On an older computer, prefer Lite.
@@ -60,6 +63,9 @@ If the **Releases** page offers a ZIP for your system, extract the **whole** fol
 - **macOS**: `PocketwaveData` is created next to `Pocketwave.app` (never inside it); keep the app in a folder you can write to, not `/Applications`. Keyboard media keys may need *System Settings → Privacy & Security → Accessibility*.
 
 ## Features
+
+### Statistics
+The **Statistics** button in the sidebar opens a Spotify-style summary of your listening: **total minutes listened**, time listened today, songs played, different songs and your daily listening streak, plus your **most played song, artist and album**, a chart of the **last 14 days** and your top songs, artists and albums. Time is counted only while a song really plays (pausing and skipping around do not count) and a play is counted after 30 seconds. Everything is stored locally in the Pocketwave data folder; **Reset statistics** at the bottom of the page clears it.
 
 ### Home page
 Pocketwave opens on a Spotify-style Home page: a greeting, quick-access tiles (All songs and your latest playlists and folders) and rows of cards: **Recently played**, **Your playlists**, **Folders**, **Recommended for you** (a daily pick from your own library, computed locally) and **Recently added**. Hover a card and press Play to start it **without leaving Home**; click anywhere else on the card to open it. The very first start shows a welcome screen to choose your music folder.
@@ -197,7 +203,7 @@ Pocketwave-liquid/
 │        ├─ core.js         helpers, icons, theme and accent colors, state, audio engine, toasts and dialogs
 │        ├─ library.js      library, lists, playlists and folders, menus, search
 │        ├─ player.js       playback, queue, side panel, Now playing screen
-│        └─ app.js          Home page, shortcuts, settings, startup, window layout
+│        └─ app.js          Home and Statistics pages, shortcuts, settings, startup, window layout
 ├─ Build-Pocketwave.bat         one-click build and launcher for Windows
 ├─ Build-Pocketwave.sh          one-click build and launcher for Linux
 ├─ Build-Pocketwave.command     one-click build and launcher for macOS

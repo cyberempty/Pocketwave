@@ -147,6 +147,134 @@ function bindHome() {
     e.preventDefault();
     itemMenu(el.dataset.type, el.dataset.id, e.clientX, e.clientY);
   });
+  box.addEventListener('click', e => {           // Statistics page: a song, artist or album plays its most listened song
+    const el = e.target.closest('[data-st="song"]');
+    if (el && el.dataset.path) playStatSong(el.dataset.path);
+  });
+}
+
+/* ===== statistics ===== */
+/* Listening statistics page (Spotify style): minutes listened, most played song / artist / album, last 14 days.
+   The numbers are collected locally by statTick() in player.js and never leave the computer. */
+const statMin = sec => Math.floor(sec / 60);
+const fmtMin = sec => sec > 0 && sec < 60 ? '<1' : statMin(sec).toLocaleString();
+function statStreak(days) {
+  let n = 0;
+  const d = new Date();
+  if ((days[dayKey(d)] || 0) < 60) d.setDate(d.getDate() - 1);   // today may still be empty: the streak is then counted from yesterday
+  while ((days[dayKey(d)] || 0) >= 60) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function statsData() {
+  const st = S.user.stats;
+  const songs = Object.entries(st.songs).map(([path, e]) => {
+    const t = S.byPath.get(path);
+    return { path, sec: e.sec, plays: e.plays, ok: !!t, title: t ? t.title : (e.title || stem(path)), artist: t ? (t.artist || '') : e.artist, album: t ? (t.album || '') : e.album };
+  }).filter(s => s.plays > 0 || s.sec >= 30);
+  const topSongs = songs.slice().sort((a, b) => b.plays - a.plays || b.sec - a.sec);
+  const group = (keyOf, nameOf) => {
+    const m = new Map();
+    for (const s of songs) {
+      const k = keyOf(s); if (!k) continue;
+      let g = m.get(k);
+      if (!g) m.set(k, g = { name: nameOf(s), sec: 0, plays: 0, best: s });
+      g.sec += s.sec; g.plays += s.plays;
+      if (s.sec > g.best.sec) g.best = s;
+    }
+    return [...m.values()].sort((a, b) => b.sec - a.sec || b.plays - a.plays);
+  };
+  const artists = group(s => norm(s.artist), s => s.artist);
+  const albums = group(s => s.album ? norm(s.album) + '|' + norm(s.artist) : '', s => s.album);
+  const days = [];
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push({ d, sec: st.days[dayKey(d)] || 0 }); }
+  return { st, songs, topSongs, artists, albums, days, streak: statStreak(st.days), today: st.days[dayKey()] || 0 };
+}
+function statBars(list, max, unit) {
+  return list.map((g, i) => `<div class="st-bar" data-st="${unit}" data-path="${esc(g.best.path)}" title="${esc(g.name)}">
+      <span class="st-rank">${i + 1}</span>
+      <div class="st-bar-in"><div class="st-bar-top"><span class="st-bar-n">${esc(g.name)}</span><span class="st-bar-v">${fmtMin(g.sec)} min</span></div>
+      <div class="st-track"><i style="width:${Math.max(3, Math.round(g.sec / max * 100))}%"></i></div></div></div>`).join('');
+}
+function renderStats() {
+  const box = $('#home');
+  const d = statsData(), st = d.st;
+  S.statTop = d.topSongs.filter(s => s.ok).slice(0, 10);
+  if (st.total < 10 && !d.topSongs.length) {
+    box.innerHTML = `<h1 class="greet">Statistics</h1><div class="home-empty"><h2>Nothing to show yet</h2><p>Play some music and your listening statistics will appear here:<br>minutes listened, your most played songs, artists and albums.</p></div>`;
+    return;
+  }
+  const top = d.topSongs[0], topA = d.artists[0], topAl = d.albums[0];
+  const since = st.since ? new Date(st.since).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const fav = (label, big, sub, path, round) => `<div class="st-fav ${path ? 'click' : ''}" data-st="song" data-path="${esc(path || '')}">
+      <div class="himg st-cov ${round ? 'round' : ''}" data-cover="${esc(path || '')}">${ic('note')}</div>
+      <div class="st-fav-t"><div class="st-k">${label}</div><div class="st-fav-n" title="${esc(big)}">${esc(big)}</div><div class="st-fav-s">${sub}</div></div></div>`;
+  const maxDay = Math.max(60, ...d.days.map(x => x.sec));
+  const bars = d.days.map(x => {
+    const today = dayKey(x.d) === dayKey();
+    return `<div class="st-col ${today ? 'today' : ''}" title="${esc(x.d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}: ${x.sec ? fmtMin(x.sec) + ' min' : 'nothing'}">
+      <div class="st-cv">${x.sec ? fmtMin(x.sec) : ''}</div><div class="st-cb"><i style="height:${x.sec ? Math.max(4, Math.round(x.sec / maxDay * 100)) : 0}%"></i></div>
+      <div class="st-cl">${esc(x.d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3))}</div></div>`;
+  }).join('');
+  const songRows = d.topSongs.slice(0, 10).map((s, i) => `<div class="st-row ${s.ok ? '' : 'missing'}" data-st="song" data-path="${esc(s.path)}" title="${esc(s.ok ? s.path : MISSING_TIP)}">
+      <span class="st-rank">${i + 1}</span><div class="himg st-cov sm" data-cover="${s.ok ? esc(s.path) : ''}">${ic('note')}</div>
+      <div class="st-rt"><div class="t">${esc(s.title)}</div><div class="sub">${esc(s.artist || 'Unknown artist')}</div></div>
+      <div class="st-rv"><b>${plural(s.plays, 'play', 'plays')}</b><span>${fmtMin(s.sec)} min</span></div></div>`).join('');
+  box.innerHTML = `<h1 class="greet">Statistics</h1>
+    <div class="st-top">
+      <div class="st-main"><div class="st-k">Total listening time</div>
+        <div class="st-num"><span id="st-min">${fmtMin(st.total)}</span><small>minutes</small></div>
+        <div class="st-sub"><span id="st-long">${esc(longDur(st.total))}</span>${since ? ` · since ${esc(since)}` : ''}</div></div>
+      <div class="st-tiles">
+        <div class="st-tile"><div class="st-tv"><span id="st-today">${fmtMin(d.today)}</span><small>min</small></div><div class="st-k">Today</div></div>
+        <div class="st-tile"><div class="st-tv" id="st-plays">${st.plays.toLocaleString()}</div><div class="st-k">Songs played</div></div>
+        <div class="st-tile"><div class="st-tv">${d.songs.length.toLocaleString()}</div><div class="st-k">Different songs</div></div>
+        <div class="st-tile"><div class="st-tv">${d.streak}<small>${d.streak === 1 ? 'day' : 'days'}</small></div><div class="st-k">Listening streak</div></div>
+      </div></div>
+    ${top ? `<div class="hsec"><h2>Your favorites</h2></div><div class="st-favs">
+      ${fav('Most played song', top.title, `${esc(top.artist || 'Unknown artist')} · ${plural(top.plays, 'play', 'plays')}`, top.path)}
+      ${topA ? fav('Most listened artist', topA.name, `${fmtMin(topA.sec)} min · ${plural(topA.plays, 'play', 'plays')}`, topA.best.path, true) : ''}
+      ${topAl ? fav('Most listened album', topAl.name, `${fmtMin(topAl.sec)} min · ${plural(topAl.plays, 'play', 'plays')}`, topAl.best.path) : ''}</div>` : ''}
+    <div class="hsec"><h2>Last 14 days</h2><span class="st-note">minutes per day</span></div><div class="st-chart">${bars}</div>
+    ${songRows ? `<div class="hsec"><h2>Most played songs</h2></div><div class="st-list">${songRows}</div>` : ''}
+    <div class="st-two">
+      ${d.artists.length ? `<div><div class="hsec"><h2>Top artists</h2></div>${statBars(d.artists.slice(0, 5), d.artists[0].sec || 1, 'song')}</div>` : ''}
+      ${d.albums.length ? `<div><div class="hsec"><h2>Top albums</h2></div>${statBars(d.albums.slice(0, 5), d.albums[0].sec || 1, 'song')}</div>` : ''}
+    </div>
+    <div class="st-foot"><span>Statistics are saved only on this computer, in the Pocketwave data folder. Nothing is sent anywhere.</span><button class="btn sm" id="st-clear">Reset statistics</button></div>`;
+  $('#st-clear').onclick = resetStats;
+  box.querySelectorAll('.st-cov[data-cover]').forEach(async el => {      // covers load one by one, without blocking the page
+    const p = el.dataset.cover; if (!p) return;
+    const src = await coverOf(p, true);
+    if (src && el.isConnected) { el.style.backgroundImage = `url("${src}")`; el.classList.add('img'); }
+  });
+}
+// While a song plays the big numbers follow it, without redrawing the page
+function refreshStatsLive() {
+  if (S.view.type !== 'stats' || S.query || $('#home').hidden || audio.paused || !$('#st-min')) return;
+  const st = S.user.stats;
+  $('#st-min').textContent = fmtMin(st.total);
+  $('#st-long').textContent = longDur(st.total);
+  $('#st-today').textContent = fmtMin(st.days[dayKey()] || 0);
+  $('#st-plays').textContent = st.plays.toLocaleString();
+}
+setInterval(refreshStatsLive, 5000);
+async function resetStats() {
+  if (!await askConfirm('Reset statistics?', 'This deletes your listening time, play counts and favorites shown here. Your music and playlists are not touched.', 'Reset')) return;
+  S.user.stats = cleanStats(null); statBreak();
+  scheduleSave(); renderMain();
+  toast('Statistics have been reset.', 'ok');
+}
+function playStatSong(path) {
+  const list = S.statTop || [];
+  let i = list.findIndex(s => s.path === path), items;
+  if (i >= 0) items = list.map(s => ({ t: S.byPath.get(s.path) }));
+  else {                                         // artist / album / favorite card: play that song on its own
+    const t = S.byPath.get(path);
+    if (!t) return toast('That song was not found: its file was deleted or moved.', 'err');
+    items = [{ t }]; i = 0;
+  }
+  if (S.currentPath === path && items.length === 1) return togglePlay();
+  playItems(items, i, { type: 'home', id: 'top' });
 }
 
 /* ===== shortcuts ===== */
@@ -659,6 +787,7 @@ function mergeUser(saved) {
     if (st.panel.width === 340) st.panel.width = 300;
   }
   if (!u.recent || !Array.isArray(u.recent.songs) || !Array.isArray(u.recent.ctx)) u.recent = { songs: [], ctx: [] };
+  u.stats = cleanStats(u.stats);
   if (!['dark', 'light', 'custom'].includes(st.theme)) st.theme = 'dark';   // "follow system" no longer exists
   u.version = 8;
   return u;

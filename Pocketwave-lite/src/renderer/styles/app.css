@@ -513,3 +513,55 @@ input[type=range].plain::-webkit-slider-thumb{opacity:1}
 
 .seek #t-dur{cursor:pointer;user-select:none;-webkit-user-select:none;border-radius:4px}
 .seek #t-dur:hover{color:var(--tx)}
+
+/* ---------- Statistics page ---------- */
+.st-k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2)}
+.st-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.st-main{padding:22px 24px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--g) 38%,var(--panel2)),var(--panel2));display:flex;flex-direction:column;justify-content:center;min-width:0}
+.st-num{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.st-num span{font-size:clamp(44px,6vw,72px)}
+.st-num small,.st-tv small{font-size:15px;font-weight:700;color:var(--tx2);letter-spacing:0}
+.st-sub{font-size:13.5px;color:var(--tx2)}
+.st-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.st-tile{padding:16px 18px;border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.st-tv{font-size:28px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:baseline;gap:6px;line-height:1.1}
+.st-note{font-size:13px;color:var(--tx3)}
+.st-favs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.st-fav{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;background:var(--panel2);min-width:0;transition:background .15s}
+.st-fav.click{cursor:pointer}
+.st-fav.click:hover{background:var(--hover)}
+.st-cov{flex:none;width:92px;height:92px;aspect-ratio:auto}
+.st-cov.round{border-radius:50%}
+.st-cov.sm{width:44px;height:44px;border-radius:6px;box-shadow:none}
+.st-fav-t{min-width:0;display:flex;flex-direction:column;gap:3px}
+.st-fav-n{font-size:18px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-fav-s{font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-chart{display:grid;grid-template-columns:repeat(14,1fr);gap:6px;height:170px;padding:12px 14px 8px;border-radius:14px;background:var(--panel2)}
+.st-col{display:flex;flex-direction:column;align-items:center;min-width:0}
+.st-cv{height:16px;font-size:11px;color:var(--tx3);line-height:16px}
+.st-cb{flex:1;width:100%;max-width:34px;display:flex;align-items:flex-end}
+.st-cb i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,var(--g) 55%,transparent);transition:height .3s}
+.st-col.today .st-cb i{background:var(--g)}
+.st-col:hover .st-cb i{background:var(--g)}
+.st-cl{margin-top:6px;font-size:11.5px;color:var(--tx3);font-weight:600}
+.st-col.today .st-cl{color:var(--tx)}
+.st-list{display:flex;flex-direction:column}
+.st-row{display:flex;align-items:center;gap:14px;padding:8px 12px;border-radius:8px;cursor:pointer}
+.st-row:hover{background:var(--rowhov)}
+.st-row.missing{opacity:.5}
+.st-rank{flex:none;width:22px;text-align:center;color:var(--tx3);font-weight:700;font-size:15px}
+.st-rt{flex:1;min-width:0}
+.st-rt .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-rt .sub{font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-rv{display:flex;flex-direction:column;align-items:flex-end;font-size:13px;color:var(--tx2)}
+.st-rv b{color:var(--tx);font-weight:700}
+.st-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 28px}
+.st-bar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;cursor:pointer}
+.st-bar:hover{background:var(--rowhov)}
+.st-bar-in{flex:1;min-width:0}
+.st-bar-top{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.st-bar-n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-bar-v{flex:none;color:var(--tx2);font-size:13px}
+.st-track{height:6px;margin-top:7px;border-radius:3px;background:color-mix(in srgb,var(--tx) 12%,transparent);overflow:hidden}
+.st-track i{display:block;height:100%;border-radius:3px;background:var(--g)}
+.st-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--tx3)}
