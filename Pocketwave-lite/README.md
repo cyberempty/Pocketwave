@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../images/pocketwave-logo.png" alt="Pocketwave logo" width="120">
+</p>
+
 # Pocketwave Lite
 
 **The classic, light edition of Pocketwave: a flat dark interface, fast and easy on memory.**
@@ -182,7 +186,8 @@ The build produces a self-contained folder (Electron runtime included), embeds `
 Pocketwave-lite/
 ├─ assets/
 │  ├─ icon.ico              Windows icon (embedded in Pocketwave.exe by the build)
-│  └─ icon.png              Linux window icon, also shown on the welcome screen
+│  ├─ icon.png              Linux window icon (logo on a black background)
+│  └─ logo.png              Logo without background, shown inside the app (welcome screen)
 ├─ scripts/
 │  ├─ build.js              portable build for Windows, Linux and macOS
 │  ├─ build-unix.sh         used by the Linux and macOS launchers

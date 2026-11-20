@@ -487,7 +487,7 @@ function renderMain() {
   if (welcome) {
     hero.hidden = true; head.hidden = true; rows.style.height = '0';
     empty.hidden = false;
-    empty.innerHTML = `<img class="welcome-logo" src="../../assets/icon.png" alt="Pocketwave" draggable="false"><h2>Welcome to Pocketwave</h2><p>Choose the folder that contains your music.<br>Pocketwave reads all its subfolders and never modifies your files.</p><button class="btn pri" id="welcome-pick">${ic('folder')}Choose music folder</button>`;
+    empty.innerHTML = `<img class="welcome-logo" src="../../assets/logo.png" alt="Pocketwave" draggable="false"><h2>Welcome to Pocketwave</h2><p>Choose the folder that contains your music.<br>Pocketwave reads all its subfolders and never modifies your files.</p><button class="btn pri" id="welcome-pick">${ic('folder')}Choose music folder</button>`;
     $('#welcome-pick').onclick = chooseRoot;
     rows.innerHTML = '';
     return;

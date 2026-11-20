@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/pocketwave-logo.png" alt="Pocketwave logo" width="120">
+</p>
+
 # Pocketwave
 
 **A portable, offline music player for Windows, Linux and macOS, with a Spotify-inspired interface.**
@@ -111,7 +115,7 @@ All shortcuts can be changed in *Settings → Shortcuts*.
 
 ```
 Pocketwave/
-├─ images/            screenshots used in the READMEs
+├─ images/            logo and screenshots used in the READMEs
 ├─ Pocketwave-lite/       Pocketwave Lite: full project and build launchers
 ├─ Pocketwave-liquid/     Pocketwave Liquid: full project and build launchers
 ├─ LICENSE
