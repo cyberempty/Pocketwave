@@ -255,6 +255,7 @@ svg{display:block;fill:currentColor}
 .hrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));grid-template-rows:auto;grid-auto-rows:0;overflow:hidden;column-gap:14px;margin:0 -12px}
 .hcard{position:relative;padding:12px;border-radius:8px;cursor:pointer;transition:background .15s;min-width:0}
 .hcard:hover{background:var(--panel2)}
+.hcard.off{visibility:hidden;pointer-events:none}
 .himg{position:relative;width:100%;aspect-ratio:1;border-radius:6px;background:color-mix(in srgb,var(--g) 16%,var(--panel2)) center/cover no-repeat;color:var(--gt);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .himg>svg{width:34%;height:34%}
 .himg.img>svg{display:none}

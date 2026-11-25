@@ -71,6 +71,15 @@ function quickTile(q) {
   const url = imgUrl(keyOfItem(q.type, q.id));
   return `<div class="qtile ${state}" data-hk="view" data-type="${q.type}" data-id="${esc(q.id)}" title="${esc(q.name)}"><div class="qimg ${url ? 'img' : ''}" ${bgStyle(url)}>${ic('note')}</div><div class="qn">${esc(q.name)}</div>${EQ}${btn}</div>`;
 }
+// Only the first row of each shelf is shown: the cards of the hidden rows are made invisible (not just clipped), so nothing peeks out under the visible ones
+function trimHomeRows() {
+  document.querySelectorAll('#home .hrow').forEach(row => {
+    const cards = [...row.children]; if (!cards.length) return;
+    const top = cards[0].offsetTop;
+    cards.forEach(c => c.classList.toggle('off', c.offsetTop > top + 1));
+  });
+}
+let homeRO = null;
 const section = (title, cards) => cards ? `<div class="hsec"><h2>${esc(title)}</h2></div><div class="hrow">${cards}</div>` : '';
 
 function renderHome() {
@@ -94,6 +103,9 @@ function renderHome() {
     const src = await coverOf(el.dataset.cover);
     if (src && el.isConnected) { el.style.backgroundImage = `url("${src}")`; el.classList.add('img'); }
   });
+
+  trimHomeRows();
+  if (!homeRO && window.ResizeObserver) { homeRO = new ResizeObserver(() => trimHomeRows()); homeRO.observe(box); }
 }
 
 // The items of a list, without opening it (so the page that is on screen does not change)
