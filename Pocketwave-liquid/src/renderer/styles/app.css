@@ -573,3 +573,24 @@ input[type=range].plain::-webkit-slider-thumb{opacity:1}
 .lsearch input::placeholder{color:var(--tx3)}
 .lsearch .ibtn{width:26px;height:26px}
 .lsearch .ibtn svg{width:16px;height:16px}
+
+/* ---------- Playlist photo: crop dialog, enlarge, camera button ---------- */
+.hero-art.editable.img{cursor:zoom-in}
+.hero-art.editable:not(.img){cursor:pointer}
+.hero-art .cam-btn{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.66);color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer}
+.hero-art .cam-btn svg{width:18px;height:18px;display:block}
+.hero-art.editable:hover .cam-btn,.hero-art .cam-btn:focus-visible{display:flex}
+.hero-art .cam-btn:hover{background:rgba(0,0,0,.85)}
+.qimg.all.img{background-size:cover;background-position:center;background-repeat:no-repeat}
+.modal.crop{width:min(400px,100%)}
+.crop-box{width:320px;max-width:100%;aspect-ratio:1;margin:0 auto 14px;border-radius:10px;overflow:hidden;background:#121212;touch-action:none}
+.crop-box canvas{display:block;width:100%;height:100%;cursor:grab}
+.crop-box canvas:active{cursor:grabbing}
+.crop-ctl{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.crop-ctl input[type=range]{flex:1;accent-color:var(--g)}
+.lightbox{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.82);cursor:zoom-out;animation:lbin .15s ease-out}
+.lightbox img{width:min(88vh,88vw);height:min(88vh,88vw);object-fit:contain;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.6);user-select:none}
+.lightbox .lb-x{position:absolute;top:14px;right:14px;width:40px;height:40px;color:#fff;background:rgba(255,255,255,.12);border-radius:50%}
+@keyframes lbin{from{opacity:0}to{opacity:1}}
+
+.himg,.qimg,.card-img,.hero-art{user-select:none}

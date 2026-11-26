@@ -67,7 +67,7 @@ function songCard(t, sec, i) {
 function quickTile(q) {
   const playing = isShownCtx(q.type === 'all' ? { type: 'all' } : { type: q.type, id: q.id });
   const state = `${playing ? 'playing' : ''} ${playing && audio.paused ? 'paused' : ''}`, btn = `<button class="hplay" title="Play">${ic(playing && !audio.paused ? 'pause' : 'play')}</button>`;
-  if (q.type === 'all') return `<div class="qtile ${state}" data-hk="view" data-type="all" title="All songs"><div class="qimg all">${ic('note')}</div><div class="qn">All songs</div>${EQ}${btn}</div>`;
+  if (q.type === 'all') { const au = imgUrl('all'); return `<div class="qtile ${state}" data-hk="view" data-type="all" title="All songs"><div class="qimg all ${au ? 'img' : ''}" ${bgStyle(au)}>${ic('note')}</div><div class="qn">All songs</div>${EQ}${btn}</div>`; }
   const url = imgUrl(keyOfItem(q.type, q.id));
   return `<div class="qtile ${state}" data-hk="view" data-type="${q.type}" data-id="${esc(q.id)}" title="${esc(q.name)}"><div class="qimg ${url ? 'img' : ''}" ${bgStyle(url)}>${ic('note')}</div><div class="qn">${esc(q.name)}</div>${EQ}${btn}</div>`;
 }
@@ -151,6 +151,7 @@ function bindHome() {
     if (el.dataset.hk === 'song') return playHomeSong(el.dataset.sec, +el.dataset.i);
     const v = el.dataset.type === 'all' ? { type: 'all' } : { type: el.dataset.type, id: el.dataset.id };
     if (play) return playFromHome(v);       // Play: start it, but do not open the playlist
+    if (e.target.closest('.himg, .qimg') && e.detail < 2) return;   // the photo of a playlist opens it with a double click only
     setView(v);                             // a click anywhere else on the card opens it
   });
   box.addEventListener('contextmenu', e => {

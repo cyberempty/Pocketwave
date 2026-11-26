@@ -5,6 +5,7 @@
  *   node scripts/build.js      the system you are running on
  *   node scripts/build.js --platform=win32|linux|darwin --arch=x64|arm64
  *   node scripts/build.js --electron=X.Y.Z    any other Electron version
+ *   node scripts/build.js --electron-zip-dir=DIR   offline: take the Electron zip from DIR instead of downloading it
  *   npm run build:win:latest   a newer Electron (more recent Chromium security fixes, but about 60 MB larger)
  *
  * The result is the folder dist/Pocketwave-<platform>-<arch>. The one-click launchers (Build-Pocketwave.bat for
@@ -22,6 +23,8 @@ const electronVersion = argv('electron') || pkg.devDependencies.electron.replace
 const platform = argv('platform') || process.platform;
 const arch = argv('arch') || process.arch;
 const SIZE_LIMIT_MB = 250;
+// Offline build: a folder with electron-v<version>-<platform>-<arch>.zip (prepared by scripts/offline-prepare.js) replaces the download of the Electron runtime
+const electronZipDir = argv('electron-zip-dir') || process.env.POCKETWAVE_ELECTRON_ZIP_DIR || null;
 
 const MIT_LICENSE = `MIT License
 
@@ -73,12 +76,14 @@ function embedWindowsIcon(outDir) {
   if (!['win32', 'linux', 'darwin'].includes(platform)) throw new Error('Unsupported platform: ' + platform);
   if (!['x64', 'arm64'].includes(arch)) throw new Error('Unsupported architecture: ' + arch);
   console.log(`Electron ${electronVersion} for ${platform}-${arch}`);
+  if (electronZipDir) console.log('Offline: using the Electron runtime from ' + electronZipDir);
   const [outDir] = await packager({
     dir: root,
     name: 'Pocketwave',
     platform,
     arch,
     electronVersion,
+    ...(electronZipDir ? { electronZipDir } : {}),
     out: path.join(root, 'dist'),
     overwrite: true,
     asar: true,

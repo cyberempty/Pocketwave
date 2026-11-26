@@ -588,6 +588,10 @@ function bindPanel() {
       const type = card.dataset.type, id = card.dataset.id;
       if (e.target.closest('[data-cam]')) { const r = e.target.closest('[data-cam]').getBoundingClientRect(); return photoMenu(type, id, r.left, r.bottom + 4); }
       const v = { type, id };
+      if (e.target.closest('.card-img')) {            // the photo opens the playlist with a double click only
+        if (e.detail >= 2 && !sameView(S.view, v)) setView(v);
+        return;
+      }
       if (!sameView(S.view, v)) setView(v);
       if (e.detail >= 2) playContext();
     }

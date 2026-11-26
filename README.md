@@ -6,6 +6,8 @@
 
 **A portable, offline music player for Windows, Linux and macOS, with a Spotify-inspired interface.**
 
+> **ONLINE version.** The components needed to build Pocketwave are downloaded during the installation (about 140 MB, first time only), so an Internet connection is required. The **OFFLINE** folder is the same program with a `components` folder that already contains everything.
+
 Point it at a folder of music and play. No installer, no account, no Internet connection, no telemetry. Everything Pocketwave saves stays in one folder next to the program.
 
 <p align="center">
@@ -47,17 +49,18 @@ The source code of both editions together is only about 500 KB as a ZIP. The por
 - **Customizable.** Dark, light or any theme color; any accent color (or one taken from the album cover); editable keyboard shortcuts.
 - **Cross-platform.** Windows 10/11 (64-bit), Linux (x64 and arm64) and macOS 10.15 or newer (Intel and Apple Silicon).
 
-## Installation
+## Installation: ONLINE version
 
-Pocketwave needs no installer. Pick one of the two ways below.
+This is the **ONLINE** folder. The components needed to build Pocketwave are **downloaded during the installation** (about 140 MB, only the first time), so an Internet connection is required. Pocketwave itself needs no installer: you build it once with one click and it becomes a portable program. Nothing is installed on your computer: the downloads are kept in a temporary folder that is removed at the end.
 
-### Option 1: one-click build (recommended, all systems)
+### What you need
+- Windows 10 / 11 (64-bit), Linux (x64 or arm64) or macOS 10.15 or newer.
+- An Internet connection the first time. The launcher downloads a portable Node.js (from nodejs.org, checked with its SHA-256), the project packages (registry.npmjs.org) and the Electron runtime (github.com). If you use a firewall or proxy, these sites must be reachable.
+- About 500 MB of free disk space while building (about 230 MB remain at the end).
 
-You do **not** need Node.js or any other tool. The launcher downloads a portable one, builds Pocketwave, creates a `Pocketwave-portable` folder and starts the program. An Internet connection is required the first time only (about 140 MB are downloaded; temporary files are removed at the end). The first build takes about 5 minutes.
-
-
-1. On GitHub choose **Code → Download ZIP** and extract it.
-2. Open the folder of the version you want: `Pocketwave-lite` or `Pocketwave-liquid`.
+### Steps
+1. Copy the whole **ONLINE** folder to the computer.
+2. Open `Pocketwave-lite` or `Pocketwave-liquid`.
 3. Start the launcher of your system:
 
 | System | Launcher | How to start it |
@@ -66,10 +69,16 @@ You do **not** need Node.js or any other tool. The launcher downloads a portable
 | **Linux** (x64 or arm64) | `Build-Pocketwave.sh` | In a terminal, in that folder: `bash Build-Pocketwave.sh` |
 | **macOS** 10.15 or newer | `Build-Pocketwave.command` | Double-click it. If macOS blocks it: right-click → *Open* → *Open*. If it does not start, run `chmod +x Build-Pocketwave.command` in Terminal first. |
 
-Next time, starting the same launcher simply opens Pocketwave. The finished program is in `Pocketwave-portable`: you can keep only that folder and delete the rest. To rebuild, delete `Pocketwave-portable` and start the launcher again.
+4. The **Pocketwave Build System** terminal opens and shows **Mode: Online**. Wait for the six phases (the download is in phases 1 to 4); Pocketwave starts by itself.
+5. The finished program is the `Pocketwave-portable` folder. Starting the launcher again just opens it (no Internet needed from now on). You can keep only `Pocketwave-portable`; to rebuild, delete it and start the launcher again.
 
-### Option 2: ready-made portable program
+While it works, the launcher shows the **Pocketwave Build System**: the same terminal on Windows, Linux and macOS, with the project, the mode (**Offline** or **Online**), the current phase (1/6 to 6/6), a status line, a progress bar with the elapsed time and a log with a time for every step. The six phases are: checking the environment, project dependencies, Electron runtime, build, creating `Pocketwave-portable` and cleaning up. If something fails, the terminal stops, shows the error in red with the last lines of the log and a hint (for example to copy the whole Pocketwave folder again when `components` is incomplete).
 
+### If something goes wrong
+- **Red error with "Check your Internet connection and try again"**: check the connection, the firewall or proxy and the antivirus, then start the launcher again.
+- **No Internet on that computer**: use the **OFFLINE** folder instead, which has everything included.
+
+### Ready-made portable program
 If the **Releases** page offers a ZIP for your system, download it, extract the **whole** folder (a USB drive works too) and run:
 
 - **Windows:** `Pocketwave.exe` (SmartScreen: *More info* → *Run anyway*; the program is not digitally signed).
@@ -85,7 +94,7 @@ If the **Releases** page offers a ZIP for your system, download it, extract the 
 
 1. Start Pocketwave and click **Choose music folder**. Pocketwave reads all its subfolders.
 2. A popup shows the loading progress. From the second start on, Pocketwave opens straight to the Home page.
-3. Double-click a song or a playlist to play it.
+3. Double-click a song or a playlist to play it. The photo of a playlist opens it with a double click only.
 
 ## Supported audio formats
 
@@ -116,8 +125,8 @@ All shortcuts can be changed in *Settings → Shortcuts*.
 ## Repository structure
 
 ```
-Pocketwave/
-├─ images/            logo and screenshots used in the READMEs
+ONLINE/                  (the OFFLINE folder has the same content plus a components folder)
+├─ images/                logo and screenshots used in the READMEs
 ├─ Pocketwave-lite/       Pocketwave Lite: full project and build launchers
 ├─ Pocketwave-liquid/     Pocketwave Liquid: full project and build launchers
 ├─ LICENSE

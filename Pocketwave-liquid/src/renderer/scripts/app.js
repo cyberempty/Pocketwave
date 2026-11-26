@@ -67,7 +67,7 @@ function songCard(t, sec, i) {
 function quickTile(q) {
   const playing = isShownCtx(q.type === 'all' ? { type: 'all' } : { type: q.type, id: q.id });
   const state = `${playing ? 'playing' : ''} ${playing && audio.paused ? 'paused' : ''}`, btn = `<button class="hplay" title="Play">${ic(playing && !audio.paused ? 'pause' : 'play')}</button>`;
-  if (q.type === 'all') return `<div class="qtile ${state}" data-hk="view" data-type="all" title="All songs"><div class="qimg all">${ic('note')}</div><div class="qn">All songs</div>${EQ}${btn}</div>`;
+  if (q.type === 'all') { const au = imgUrl('all'); return `<div class="qtile ${state}" data-hk="view" data-type="all" title="All songs"><div class="qimg all ${au ? 'img' : ''}" ${bgStyle(au)}>${ic('note')}</div><div class="qn">All songs</div>${EQ}${btn}</div>`; }
   const url = imgUrl(keyOfItem(q.type, q.id));
   return `<div class="qtile ${state}" data-hk="view" data-type="${q.type}" data-id="${esc(q.id)}" title="${esc(q.name)}"><div class="qimg ${url ? 'img' : ''}" ${bgStyle(url)}>${ic('note')}</div><div class="qn">${esc(q.name)}</div>${EQ}${btn}</div>`;
 }
@@ -151,6 +151,7 @@ function bindHome() {
     if (el.dataset.hk === 'song') return playHomeSong(el.dataset.sec, +el.dataset.i);
     const v = el.dataset.type === 'all' ? { type: 'all' } : { type: el.dataset.type, id: el.dataset.id };
     if (play) return playFromHome(v);       // Play: start it, but do not open the playlist
+    if (e.target.closest('.himg, .qimg') && e.detail < 2) return;   // the photo of a playlist opens it with a double click only
     setView(v);                             // a click anywhere else on the card opens it
   });
   box.addEventListener('contextmenu', e => {
@@ -538,12 +539,13 @@ const tabAppearance = {
       <div class="rowbtns"><button class="btn sm" id="ac-reset">Restore default (green)</button></div>
     </div>
     <div class="set-sec"><h3>Background colors</h3>
-      <div class="radio-row">${[['auto', 'Automatic'], ['custom', 'My colors']].map(([k, l]) => `<button class="chip ${st.bgMode === k ? 'on' : ''}" data-bgmode="${k}">${l}</button>`).join('')}</div>
+      <div class="set-row"><div class="lbl">No background color<small>Switches the colored light behind the glass off: only the plain theme color stays, and the program uses less power.</small></div><div class="ctl2">${sw('bg-none', st.bgNone)}</div></div>
+      ${st.bgNone ? '' : `<div class="radio-row">${[['auto', 'Automatic'], ['custom', 'My colors']].map(([k, l]) => `<button class="chip ${st.bgMode === k ? 'on' : ''}" data-bgmode="${k}">${l}</button>`).join('')}</div>
       ${st.bgMode === 'custom' ? `
       <div class="sub-h">How many colors</div>
       <div class="radio-row">${[1, 2, 3, 4, 5].map(n => `<button class="chip ${st.bgCount === n ? 'on' : ''}" data-bgcount="${n}">${n}</button>`).join('')}</div>
       ${st.bgColors.slice(0, st.bgCount).map((c, i) => `<div class="bg-row"><input type="color" class="bg-pick" data-bgp="${i}" value="${c}" aria-label="Background color ${i + 1}"><div class="hex"><input class="bg-hx" data-bgh="${i}" type="text" value="${c.toUpperCase()}" maxlength="7" spellcheck="false" aria-label="Background color ${i + 1} in hexadecimal"></div></div>`).join('')}
-      <div class="hint">These colors fill the light behind the glass and stay fixed, whatever the accent or the song.</div>` : `<div class="hint">The background follows the accent color (and the album cover, if Dynamic color is on) with colors that match each other.</div>`}
+      <div class="hint">These colors fill the light behind the glass and stay fixed, whatever the accent or the song.</div>` : `<div class="hint">The background follows the accent color (and the album cover, if Dynamic color is on) with colors that match each other.</div>`}`}
     </div>
     <div class="set-sec"><h3>Dynamic color</h3>
       <div class="set-row"><div class="lbl">Use the dominant color of the album cover<small>The accent color follows the song that is playing.</small></div><div class="ctl2">${sw('ac-dyn', st.dynamicColor)}</div></div>
@@ -566,6 +568,7 @@ const tabAppearance = {
     };
     $('#th-hx').onblur = e => { e.target.value = baseThemeColor().toUpperCase(); e.target.classList.remove('bad'); };
 
+    $('#bg-none').onchange = e => { st.bgNone = e.target.checked; scheduleSave(); applyTheme(); renderSettingsTab(); };
     b.querySelectorAll('[data-bgmode]').forEach(c => c.onclick = () => { st.bgMode = c.dataset.bgmode; scheduleSave(); applyTheme(); renderSettingsTab(); });
     b.querySelectorAll('[data-bgcount]').forEach(c => c.onclick = () => { st.bgCount = +c.dataset.bgcount; scheduleSave(); applyTheme(); renderSettingsTab(); });
     const setBg = (i, hex) => { st.bgColors[i] = normHex(hex); scheduleSave(); applyTheme(); };
@@ -830,6 +833,7 @@ function mergeUser(saved) {
   st.bgColors = d.settings.bgColors.map((c, i) => (sv.bgColors && /^#[0-9a-f]{6}$/i.test(sv.bgColors[i] || '')) ? sv.bgColors[i].toLowerCase() : c);
   st.bgCount = Math.max(1, Math.min(5, Math.round(Number(st.bgCount)) || 3));
   if (st.bgMode !== 'custom') st.bgMode = 'auto';
+  st.bgNone = st.bgNone === true;
   const dg = defaultUser().settings.gfx;   // (d.settings is replaced by the saved settings above, so take a fresh default)
   st.gfx = Object.assign({}, dg, sv.gfx || {});   // graphics quality: keep only valid values
   for (const [o, def] of Object.entries(GFX_OPTS)) if (!def.vals.some(([v]) => v === st.gfx[o])) st.gfx[o] = dg[o];

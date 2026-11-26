@@ -98,7 +98,7 @@ function libItem(type, id, label, count, pinned) {
 }
 
 /* ---- Order and pins: pinned items stay at the top of their own section ---- */
-const keyOfItem = (type, id) => (type === 'playlist' ? 'pl:' : 'fo:') + id;
+const keyOfItem = (type, id) => type === 'all' ? 'all' : (type === 'playlist' ? 'pl:' : 'fo:') + id;
 const isPinned = (type, id) => S.user.pins.includes(keyOfItem(type, id));
 
 /* ---- What is shown where ----
@@ -285,30 +285,72 @@ function folderMenu(id, x, y) {
   ]);
 }
 
-/* ---- Photos of playlists and folders (compressed, then stored in PocketwaveData/images) ---- */
-const PHOTO_MAX = 640;
-async function compressImage(bytes) {
+/* ---- Photos of playlists and folders (cropped, compressed to WebP, then stored in PocketwaveData/images) ---- */
+const PHOTO_OUT = 768, CROP_VIEW = 320;
+// Lets the user move and resize the picture inside a square frame; resolves with the compressed bytes (or null if cancelled)
+async function cropPhoto(bytes) {
   const bmp = await createImageBitmap(new Blob([bytes]));
-  const sc = Math.min(1, PHOTO_MAX / Math.max(bmp.width, bmp.height));
-  const c = document.createElement('canvas');
-  c.width = Math.max(1, Math.round(bmp.width * sc)); c.height = Math.max(1, Math.round(bmp.height * sc));
-  const x = c.getContext('2d');
-  x.fillStyle = '#121212'; x.fillRect(0, 0, c.width, c.height);   // transparent pictures get a dark background
-  x.drawImage(bmp, 0, 0, c.width, c.height);
-  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
-  return new Uint8Array(await blob.arrayBuffer());
+  const st = { z: 1, x: 0, y: 0 };                                   // zoom (1 = the picture just covers the frame) and offset of its center, in frame pixels
+  const base = Math.max(CROP_VIEW / bmp.width, CROP_VIEW / bmp.height);
+  const clamp = () => {
+    const w = bmp.width * base * st.z, h = bmp.height * base * st.z;
+    st.x = Math.max(-(w - CROP_VIEW) / 2, Math.min((w - CROP_VIEW) / 2, st.x));
+    st.y = Math.max(-(h - CROP_VIEW) / 2, Math.min((h - CROP_VIEW) / 2, st.y));
+  };
+  const draw = (cv, size) => {
+    const k = size / CROP_VIEW, x = cv.getContext('2d'), w = bmp.width * base * st.z * k, h = bmp.height * base * st.z * k;
+    x.fillStyle = '#121212'; x.fillRect(0, 0, size, size);
+    x.drawImage(bmp, size / 2 + st.x * k - w / 2, size / 2 + st.y * k - h / 2, w, h);
+  };
+  const res = await modal({
+    title: 'Adjust photo', cls: 'crop',
+    body: `<div class="crop-box" id="cr-box"><canvas id="cr-cv" width="${CROP_VIEW}" height="${CROP_VIEW}"></canvas></div>
+      <div class="crop-ctl"><span>Size</span><input type="range" id="cr-z" min="100" max="400" value="100" aria-label="Photo size"><button class="btn sm" id="cr-reset">Reset</button></div>
+      <div class="hint">Drag the picture to move it. Use the slider or the mouse wheel to make it bigger or smaller.</div>`,
+    buttons: [{ label: 'Cancel', value: null }, { label: 'Use photo', primary: true, value: 'ok' }],
+    onOpen: ov => {
+      const cv = ov.querySelector('#cr-cv'), z = ov.querySelector('#cr-z');
+      const paint = () => { clamp(); draw(cv, CROP_VIEW); z.value = Math.round(st.z * 100); };
+      let drag = null;
+      cv.onpointerdown = e => { drag = { px: e.clientX, py: e.clientY, x: st.x, y: st.y }; cv.setPointerCapture(e.pointerId); };
+      cv.onpointermove = e => { if (!drag) return; st.x = drag.x + e.clientX - drag.px; st.y = drag.y + e.clientY - drag.py; paint(); };
+      cv.onpointerup = cv.onpointercancel = () => { drag = null; };
+      cv.onwheel = e => { e.preventDefault(); st.z = Math.max(1, Math.min(4, st.z * (e.deltaY < 0 ? 1.08 : 1 / 1.08))); paint(); };
+      z.oninput = () => { st.z = z.value / 100; paint(); };
+      ov.querySelector('#cr-reset').onclick = () => { st.z = 1; st.x = st.y = 0; paint(); };
+      paint();
+    }
+  });
+  if (res !== 'ok') { bmp.close && bmp.close(); return null; }
+  const c = document.createElement('canvas'); c.width = c.height = PHOTO_OUT;
+  draw(c, PHOTO_OUT); bmp.close && bmp.close();
+  let blob = await new Promise(r => c.toBlob(r, 'image/webp', 0.82));
+  if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));   // very old Chromium: JPEG instead
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), ext: blob.type === 'image/webp' ? 'webp' : 'jpg' };
 }
-// Lets the user pick a picture; returns the name of the stored (compressed) file, or null
+// Lets the user pick a picture, crop it and save it; returns the name of the stored (compressed) file, or null
 async function pickPhoto() {
   const r = await pocketwave.pickImage();
   if (!r) return null;
   if (!r.ok) { toast('Could not use that photo: ' + r.error, 'err'); return null; }
   let out;
-  try { out = await compressImage(r.bytes); } catch (e) { toast('That file is not a valid image.', 'err'); return null; }
-  const saved = await pocketwave.saveImage(out);
+  try { out = await cropPhoto(r.bytes); } catch (e) { toast('That file is not a valid image.', 'err'); return null; }
+  if (!out) return null;
+  const saved = await pocketwave.saveImage(out.bytes, out.ext);
   if (!saved.ok) { toast('Could not save the photo: ' + saved.error, 'err'); return null; }
-  toast(`Photo saved (${fmtBytes(r.bytes.length)} → ${fmtBytes(out.length)})`, 'ok');
+  toast(`Photo saved (${fmtBytes(r.bytes.length)} → ${fmtBytes(out.bytes.length)})`, 'ok');
   return saved.name;
+}
+// Shows the photo large, over the whole window (click, Esc or the button to close)
+function openLightbox(url, title) {
+  const root = $('#modal-root'), ov = document.createElement('div');
+  ov.className = 'lightbox';
+  ov.innerHTML = `<img src="${url}" alt="${esc(title || 'Photo')}" draggable="false"><button class="ibtn lb-x" title="Close">${ic('close')}</button>`;
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', onKey, true);
+  ov.onclick = close;
+  root.appendChild(ov);
 }
 async function chooseImage(type, id) {
   const name = await pickPhoto();
@@ -518,6 +560,7 @@ function renderMain() {
   const total = items.reduce((a, it) => a + (it.t.duration || 0), 0);
   const n = items.length;
   const hasMenu = v.type === 'playlist' || v.type === 'folder';
+  const hasPhoto = hasMenu || v.type === 'all';          // All songs can have a photo too
   if (searching) {
     const g = searchGroups();
     const chip = (type, id, name) => {
@@ -533,7 +576,7 @@ function renderMain() {
   } else {
     const meta = `${plural(n, 'song', 'songs')}${total ? ', ' + longDur(total) : ''}`;
     const heroImg = imgUrl(imgKey(v));
-    hero.innerHTML = `<div class="hero-in"><div class="hero-art ${v.type} ${heroImg ? 'img' : ''} ${hasMenu ? 'editable' : ''}" ${heroImg ? `style="background-image:url('${heroImg}')"` : ''}>${ic('note')}${hasMenu ? `<div class="camera">${ic('camera')}<span>Photo</span></div>` : ''}</div>
+    hero.innerHTML = `<div class="hero-in"><div class="hero-art ${v.type} ${heroImg ? 'img' : ''} ${hasPhoto ? 'editable' : ''}" ${heroImg ? `style="background-image:url('${heroImg}')"` : ''}>${ic('note')}${hasPhoto ? `<button class="cam-btn" title="${heroImg ? 'Change photo' : 'Add photo'}">${ic('camera')}</button>` : ''}</div>
       <div class="hero-txt"><div class="kind">${v.type === 'all' ? 'Library' : 'Playlist'}</div>
         <h1><span class="ttl">${esc(viewTitle(v))}</span>${hasMenu ? `<button class="pencil" id="h-edit" title="Edit name and photo">${ic('edit')}</button>` : ''}</h1>
         <div class="meta">${meta}</div></div></div>
@@ -541,10 +584,17 @@ function renderMain() {
       <button class="ibtn ctl big" id="h-shuf" ${n ? '' : 'disabled'}>${ic('shuffle')}</button>
       ${hasMenu ? `<button class="ibtn big" id="h-more" title="More options">${ic('more')}</button>` : ''}
       ${hasMenu ? `<div class="lsearch"><span class="lsico">${ic('search')}</span><input id="lq" type="search" placeholder="Search in this ${v.type === 'folder' ? 'folder' : 'playlist'}" value="${esc(S.listQuery)}" autocomplete="off" spellcheck="false"><button class="ibtn" id="lq-clear" title="Clear" ${S.listQuery ? '' : 'hidden'}>${ic('close')}</button></div>` : ''}</div>`;
-    if (hasMenu) {
+    if (hasPhoto) {
       const art = $('.hero-art');
-      art.onclick = e => photoMenu(v.type, v.id, e.clientX, e.clientY);          // left click
+      // With a photo, a click enlarges it (the camera button changes or deletes it); without one, a click adds it
+      art.onclick = e => {
+        if (heroImg && !e.target.closest('.cam-btn')) { if (e.detail >= 2) openLightbox(heroImg, viewTitle(v)); return; }   // double click on the photo enlarges it
+        const r = (e.target.closest('.cam-btn') || art).getBoundingClientRect();
+        photoMenu(v.type, v.id, e.target.closest('.cam-btn') ? r.left : e.clientX, e.target.closest('.cam-btn') ? r.bottom + 4 : e.clientY);
+      };
       art.oncontextmenu = e => { e.preventDefault(); photoMenu(v.type, v.id, e.clientX, e.clientY); };   // right click
+    }
+    if (hasMenu) {
       $('#h-edit').onclick = () => openEditDialog(v.type, v.id);
       $('#h-more').onclick = e => { const r = e.currentTarget.getBoundingClientRect(); itemMenu(v.type, v.id, r.left, r.bottom + 4); };
       wireListSearch();

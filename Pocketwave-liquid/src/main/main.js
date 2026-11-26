@@ -427,12 +427,12 @@ function registerIpc() {
       return { ok: true, bytes: await fsp.readFile(src) };
     } catch (e) { return { ok: false, error: e.message }; }
   });
-  ipcMain.handle('image:save', async (_e, bytes) => {
+  ipcMain.handle('image:save', async (_e, bytes, ext) => {
     try {
       const buf = Buffer.from(bytes);
       if (!buf.length || buf.length > 8 * 1024 * 1024) return { ok: false, error: 'Invalid image data.' };
       await fsp.mkdir(imagesDir(), { recursive: true });
-      const name = Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + '.jpg';
+      const name = Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + (ext === 'webp' ? '.webp' : '.jpg');
       await fsp.writeFile(path.join(imagesDir(), name), buf);
       return { ok: true, name };
     } catch (e) { return { ok: false, error: e.message }; }

@@ -16,7 +16,7 @@ contextBridge.exposeInMainWorld('pocketwave', {
   reveal: p => ipcRenderer.invoke('file:reveal', p),
   relocateData: () => ipcRenderer.invoke('data:relocate'),
   pickImage: () => ipcRenderer.invoke('image:pick'),
-  saveImage: bytes => ipcRenderer.invoke('image:save', bytes),
+  saveImage: (bytes, ext) => ipcRenderer.invoke('image:save', bytes, ext),
   removeImage: n => ipcRenderer.invoke('image:remove', n),
   imageInfo: () => ipcRenderer.invoke('image:info'),
   clearImages: () => ipcRenderer.invoke('image:clear'),

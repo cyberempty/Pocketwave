@@ -291,7 +291,7 @@ function viewTitle(v) {
 }
 
 /* ----- Images of playlists and folders (copied into PocketwaveData/images) ----- */
-const imgKey = v => v.type === 'playlist' ? 'pl:' + v.id : v.type === 'folder' ? 'fo:' + v.id : null;
+const imgKey = v => v.type === 'playlist' ? 'pl:' + v.id : v.type === 'folder' ? 'fo:' + v.id : v.type === 'all' ? 'all' : null;
 const imgFile = name => toFileUrl(S.dataDir.replace(/[\\/]+$/, '') + '/images/' + name);
 function imgUrl(key) {
   const n = key && S.user.images[key];

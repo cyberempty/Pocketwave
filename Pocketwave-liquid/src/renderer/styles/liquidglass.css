@@ -299,3 +299,6 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5px;b
 .lsearch:hover{background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.08))}
 .lsearch:focus-within{border-color:var(--g);box-shadow:inset 0 1.5px 2px rgba(0,0,0,.18),0 0 0 3px color-mix(in srgb,var(--g) 32%,transparent)}
 :root[data-gfx-glass="full"] .lsearch{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+
+/* "No background color" (Settings > Appearance): no colored light behind the glass */
+:root[data-nobg="1"] #lgbg{display:none}

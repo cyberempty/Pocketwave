@@ -240,6 +240,7 @@ function applyGlassPalette(rgb) {
 function applyTheme() {
   const st = S.user.settings, root = document.documentElement;
   root.dataset.os = /Mac/i.test(navigator.userAgent) ? 'mac' : 'other';
+  root.dataset.nobg = st.bgNone ? '1' : '0';       // "No background color": the colored light behind the glass is switched off
   BASE_VARS.forEach(v => root.style.removeProperty(v));
   if (st.theme === 'custom') {
     const base = computeBase(baseThemeColor());
@@ -356,7 +357,7 @@ const defaultUser = () => ({
     volume: 1, muted: false, showRemaining: false, repeat: 'off', shuffles: {}, sorts: {}, sidebarWidth: 260,
     panel: { open: true, mode: 'now', side: 'right', width: 300 },
     theme: 'dark', themeColor: '#16213a', accent: '#1ed760', dynamicColor: false,
-    bgMode: 'auto', bgCount: 3, bgColors: ['#1ed760', '#14c4a0', '#22a6e0', '#ff4081', '#ffc400'],   // Liquid Glass background: automatic or 1-5 own colors
+    bgNone: false, bgMode: 'auto', bgCount: 3, bgColors: ['#1ed760', '#14c4a0', '#22a6e0', '#ff4081', '#ffc400'],   // Liquid Glass background: automatic or 1-5 own colors
     gfx: Object.assign({ preset: 'low', showFps: 'off' }, GFX_PRESETS.low),   // graphics quality (Settings > Graphics); 'low' = just above the minimum
     adv: { covers: true, tags: true },
     shortcuts: Object.assign({}, DEFAULT_SHORTCUTS), last: null
@@ -392,7 +393,7 @@ function viewTitle(v) {
 }
 
 /* ----- Images of playlists and folders (copied into PocketwaveData/images) ----- */
-const imgKey = v => v.type === 'playlist' ? 'pl:' + v.id : v.type === 'folder' ? 'fo:' + v.id : null;
+const imgKey = v => v.type === 'playlist' ? 'pl:' + v.id : v.type === 'folder' ? 'fo:' + v.id : v.type === 'all' ? 'all' : null;
 const imgFile = name => toFileUrl(S.dataDir.replace(/[\\/]+$/, '') + '/images/' + name);
 function imgUrl(key) {
   const n = key && S.user.images[key];

@@ -6,6 +6,8 @@
 
 **The classic, light edition of Pocketwave: a flat dark interface, fast and easy on memory.**
 
+> **ONLINE version.** The components needed to build Pocketwave are downloaded during the installation (about 140 MB, first time only), so an Internet connection is required. The **OFFLINE** folder is the same program with a `components` folder that already contains everything.
+
 <p align="center">
   <img src="../images/03-lite-playlist-playing.png" alt="Pocketwave Lite: playlist page while playing" width="100%">
 </p>
@@ -33,30 +35,36 @@ Pocketwave Lite is the standard edition. It uses flat, dark Spotify-style panels
 | Data location | `PocketwaveData` folder next to the program |
 | License | MIT |
 
-## Installation
+## Installation: ONLINE version
 
-Pocketwave needs no installer. You build it yourself with one click, or download a ready-made portable program.
+This is the **ONLINE** folder. The components needed to build Pocketwave are **downloaded during the installation** (about 140 MB, only the first time), so an Internet connection is required. Pocketwave itself needs no installer: you build it once with one click and it becomes a portable program. Nothing is installed on your computer: the downloads are kept in a temporary folder that is removed at the end.
 
-### One-click build (Windows, Linux, macOS)
+### What you need
+- Windows 10 / 11 (64-bit), Linux (x64 or arm64) or macOS 10.15 or newer.
+- An Internet connection the first time. The launcher downloads a portable Node.js (from nodejs.org, checked with its SHA-256), the project packages (registry.npmjs.org) and the Electron runtime (github.com). If you use a firewall or proxy, these sites must be reachable.
+- About 500 MB of free disk space while building (about 230 MB remain at the end).
 
-No Node.js or other tool is needed: the launcher downloads a portable one, builds Pocketwave into a `Pocketwave-portable` folder and starts it. An Internet connection is needed the first time only (about 140 MB are downloaded; temporary files are removed at the end). It takes about 5 minutes.
-
-1. Download the repository (**Code → Download ZIP**) and extract it.
-2. Open the `Pocketwave-lite` folder.
+### Steps
+1. Copy the whole **ONLINE** folder to the computer.
+2. Open `Pocketwave-lite`.
 3. Start the launcher of your system:
 
 | System | Launcher | How to start it |
 |---|---|---|
 | **Windows** 10 / 11 (64-bit) | `Build-Pocketwave.bat` | Double-click it. If SmartScreen appears: *More info* → *Run anyway*. |
-| **Linux** (x64 or arm64) | `Build-Pocketwave.sh` | In a terminal in this folder: `bash Build-Pocketwave.sh` |
-| **macOS** 10.15 or newer | `Build-Pocketwave.command` | Double-click it. If macOS blocks it: right-click → *Open* → *Open*. If it does not start, run `chmod +x Build-Pocketwave.command` first. |
+| **Linux** (x64 or arm64) | `Build-Pocketwave.sh` | In a terminal, in that folder: `bash Build-Pocketwave.sh` |
+| **macOS** 10.15 or newer | `Build-Pocketwave.command` | Double-click it. If macOS blocks it: right-click → *Open* → *Open*. If it does not start, run `chmod +x Build-Pocketwave.command` in Terminal first. |
 
-Starting the same launcher again simply opens Pocketwave. The finished program is in `Pocketwave-portable`: keep only that folder if you like. To rebuild, delete `Pocketwave-portable` and run the launcher again.
+4. The **Pocketwave Build System** terminal opens and shows **Mode: Online**. Wait for the six phases (the download is in phases 1 to 4); Pocketwave starts by itself.
+5. The finished program is the `Pocketwave-portable` folder. Starting the launcher again just opens it (no Internet needed from now on). You can keep only `Pocketwave-portable`; to rebuild, delete it and start the launcher again.
 
-On Windows the launcher downloads a portable Node.js (checked with its SHA-256), installs the dependencies, builds the program, creates `Pocketwave-portable` (with `Pocketwave.exe`, `LICENSE` and a `licenses` folder), removes every temporary file and starts Pocketwave. On Linux and macOS the same is done by `scripts/build-unix.sh`.
+While it works, the launcher shows the **Pocketwave Build System**: the same terminal on Windows, Linux and macOS, with the project, the mode (**Offline** or **Online**), the current phase (1/6 to 6/6), a status line, a progress bar with the elapsed time and a log with a time for every step. The six phases are: checking the environment, project dependencies, Electron runtime, build, creating `Pocketwave-portable` and cleaning up. If something fails, the terminal stops, shows the error in red with the last lines of the log and a hint (for example to copy the whole Pocketwave folder again when `components` is incomplete).
+
+### If something goes wrong
+- **Red error with "Check your Internet connection and try again"**: check the connection, the firewall or proxy and the antivirus, then start the launcher again.
+- **No Internet on that computer**: use the **OFFLINE** folder instead, which has everything included.
 
 ### Ready-made portable program
-
 If the **Releases** page offers a ZIP for your system, extract the **whole** folder (a USB drive works too) and run `Pocketwave.exe` (Windows), `./Pocketwave` (Linux) or `Pocketwave.app` (macOS). The program is not digitally signed: on Windows use *More info* → *Run anyway*; on macOS use right-click → *Open* the first time.
 
 ### Notes for Linux and macOS
@@ -70,7 +78,7 @@ If the **Releases** page offers a ZIP for your system, extract the **whole** fol
 The **Statistics** button in the sidebar opens a Spotify-style summary of your listening: **total minutes listened**, time listened today, songs played, different songs and your daily listening streak, plus your **most played song, artist and album**, a chart of the **last 14 days** and your top songs, artists and albums. Time is counted only while a song really plays (pausing and skipping around do not count) and a play is counted after 30 seconds. Everything is stored locally in the Pocketwave data folder; **Reset statistics** at the bottom of the page clears it.
 
 ### Home page
-Pocketwave opens on a Spotify-style Home page: a greeting, quick-access tiles (All songs and your latest playlists and folders) and rows of cards: **Recently played**, **Your playlists**, **Folders**, **Recommended for you** (a daily pick from your own library, computed locally) and **Recently added**. Hover a card and press Play to start it **without leaving Home**; click anywhere else on the card to open it. The very first start shows a welcome screen to choose your music folder.
+Pocketwave opens on a Spotify-style Home page: a greeting, quick-access tiles (All songs and your latest playlists and folders) and rows of cards: **Recently played**, **Your playlists**, **Folders**, **Recommended for you** (a daily pick from your own library, computed locally) and **Recently added**. Hover a card and press Play to start it **without leaving Home**; click the name or the empty part of the card to open it. **The photo of a playlist or folder opens it with a double click only** (a single click on the photo does nothing, so it is never opened by mistake; Play works with a single click). The same applies to the tiles at the top and to the cards in the right side panel. The very first start shows a welcome screen to choose your music folder.
 
 ### Library and synchronization
 - **Always-on sync.** The music folder is monitored in real time and the folder is the source of truth:
@@ -90,7 +98,7 @@ Pocketwave opens on a Spotify-style Home page: a greeting, quick-access tiles (A
 - **My playlists:** create your own, drag to reorder, pin to the top. A pinned item shows a pin symbol after its name.
 - **Context menu** (right-click or the three dots): Play, Pin to top / Unpin, Move to playlist / Move to folders (folders only), Move up / down, Show folder path (folders only), Export as M3U8, Edit, Delete.
 - **Edit** changes name and photo in one dialog.
-- **Photos** for playlists and folders: click the photo area to upload, change or delete. Photos are compressed (max 640 px, JPEG) and stored in `PocketwaveData/images`; the size before and after is shown.
+- **Photos** for playlists and folders: double-click the photo to enlarge it; the camera button (or right click) uploads, changes or deletes it. **All songs** can have a photo too (shown on its page and on the Home tile). Photos are cropped and resized in a small editor (drag to move, slider or mouse wheel to resize), compressed (768 px square, WebP) and stored in `PocketwaveData/images`; the size before and after is shown.
 - **Delete** asks for confirmation. A folder is only removed from Pocketwave, it stays on your computer and can be restored in Settings.
 - **M3U / M3U8** import and export, with relative paths when possible.
 - **Playlist page color from the photo.** When a playlist or folder has a photo, the header of its page takes the dominant color of that photo with a soft fade into the page, like Spotify. Black and white photos use their average color. It can be turned off in *Settings → Appearance*.
@@ -191,7 +199,9 @@ Pocketwave-lite/
 │  └─ logo.png              Logo without background, shown inside the app (welcome screen)
 ├─ scripts/
 │  ├─ build.js              portable build for Windows, Linux and macOS
+│  ├─ build-system.js       the Pocketwave Build System terminal (phases, progress bar, log)
 │  ├─ build-unix.sh         used by the Linux and macOS launchers
+│  ├─ offline-prepare.js    offline build: verifies and joins the Electron parts of ../components
 │  └─ download-node.ps1     downloads a portable Node.js for the .bat
 ├─ src/
 │  ├─ main/                 Electron main process
